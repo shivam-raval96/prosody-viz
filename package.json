@@ -1,0 +1,24 @@
+{
+  "name": "prosody-viz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shivam-raval96/prosody-viz.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shivam-raval96/prosody-viz/issues"
+  },
+  "homepage": "https://shivam-raval96.github.io/prosody-viz",
+  "dependencies": {
+    "create-react-app": "^5.0.1"
+  }
+}
