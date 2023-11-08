@@ -1,27 +1,88 @@
 // src/App.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CurveRender from './components/curverender';
+import data2 from "./data/fernanda_hbs2.csv";
 //import TextRender from './components/textrender';
-
+import * as d3 from 'd3';
 
 import './App.css';
 
-
 function App() {
-    const audio_data = {
-        time:Array.from({ length: 50 }, (_, index) => Number((index * 0.1).toFixed(1))),
-        amp: Array.from({ length: 50 }, () => Math.random()),
-        pitch:Array.from({ length: 50 }, () => 100 + Math.random() * 100)
-    };
 
+  const [data, setData] = useState([]);
+  const [toggleStatus, setToggleStatus] = useState(false);
 
+  const toggle = () => {
+    setToggleStatus(!toggleStatus);
+    // You might want to update the data or do something else when the toggle is hit
+  };
 
-    return (
-      <>
-        <h3>SpeechViz</h3>
-        <CurveRender audio={audio_data} width={800} height={800} />
-      </>
-    );
+  // prepare data using d3
+  useEffect(() => {
+
+    d3.csv(data2, function(d) {
+      return {
+        word: d.Word,
+        start: +d.Start,
+        end: +d.End,
+        pitch: +d.pitch,
+        vol: +d.amplitude
+      };
+    }).then(loadedData => {
+      console.log(loadedData);
+      let audio = {
+        time: [],
+        start: [],
+        end: [],
+        word: [],
+        amp: [],
+        pitch: []
+      };
+      for (let i = 0; i < loadedData.length; i++) {
+        audio.time.push(loadedData[i].start);
+        audio.start.push(loadedData[i].start);
+        audio.end.push(loadedData[i].end);
+        audio.word.push(loadedData[i].word);
+        audio.amp.push(loadedData[i].vol);
+        audio.pitch.push(loadedData[i].pitch);
+      }
+      console.log(audio);
+      audio.amp = movingAverage(audio.amp, 10);
+      audio.pitch = movingAverage(audio.pitch, 10);
+      setData(audio);
+    }).catch(error => {
+      console.error("Error loading the CSV file:", error);
+    });
+  }, [toggleStatus]);
+
+  if (data.length === 0) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <>
+      <h3>SpeechViz</h3>
+      <button onClick={toggle}>
+        {toggleStatus ? 'Switch to Type A' : 'Switch to Type B'}
+      </button>
+      <CurveRender audio={data} width={1800} height={900} toggleStatus={toggleStatus}/>
+    </>
+  );
+}
+
+function movingAverage(data, windowSize) {
+  let result = [];
+  for (let i = 0; i < data.length; i++) {
+      let start = Math.max(0, i - Math.floor(windowSize/2));
+      let end = Math.min(data.length, i + Math.floor(windowSize/2) + 1);
+      
+      let sum = 0;
+      for (let j = start; j < end; j++) {
+          sum += data[j];
+      }
+      result.push(sum / (end - start));
+  }
+  return result;
 }
 
 export default App;
