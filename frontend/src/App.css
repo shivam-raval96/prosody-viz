@@ -31,3 +31,14 @@ svg {
   bottom: 10px;
   left: 10px;
 }
+
+#tooltip {
+  position: absolute;
+  visibility: hidden;
+  background-color: white;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  pointer-events: none;
+  width: 300px;
+}

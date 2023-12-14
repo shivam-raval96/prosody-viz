@@ -13,6 +13,7 @@ function Homepage() {
   const [fernanda, setData2] = useState([]);
   const [pauseCheck, pauseCheckStatus] = useState(true);
   const [normalCheck, setNormalStatus] = useState(false);
+  const [wordDensityCheck, setWordDensityCheck] = useState(false);
   const [pauseSlider, setPauseSlider] = useState(0.5);
 
   const [showVideo, setShowVideo] = useState(false);
@@ -31,6 +32,11 @@ function Homepage() {
   };
   const normalToggle = (event) => {
     setNormalStatus(event.target.checked);
+    // You might want to update the data or do something else when the toggle is hit
+  };
+
+  const densityToggle = (event) => {
+    setWordDensityCheck(event.target.checked);
     // You might want to update the data or do something else when the toggle is hit
   };
 
@@ -73,6 +79,10 @@ function Homepage() {
               <input class="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
               <label class="form-check-label" for="normalSwitch">Normalize</label>
             </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" checked={wordDensityCheck} onChange={densityToggle} type="checkbox" id="normalSwitch" />
+              <label class="form-check-label" for="normalSwitch">View Word Density</label>
+            </div>
             <label for="customRange3" id="pauseRange" class="form-label">Pause Length: 0.5 seconds</label>
             <input onChange={pauseSlide} type="range" class="form-range" min="0.2" max="3" step="0.2" id="customRange3"></input>
             </div>
@@ -81,16 +91,19 @@ function Homepage() {
             <div class="legend">
               <Legend width={window.innerWidth} height={50} toggleStatus={pauseCheck} normalizeStatus={normalCheck}/>
             </div>
-            <p>High Pitch............Low Pitch</p>
+            <p>Low Pitch............High Pitch</p>
+            <p>Each line represents 30 seconds</p>
+            <p>Click on the graph to view the part of the audio/speech.</p>
             </div>
           </div>
         </div>
           </div>
+          <div id="tooltip"></div>
           <div className="col-lg-5">
-            <CurveRender videoHandler={handleVideoChange} audio={martin} width={window.innerWidth / 2} height={window.innerHeight - 100} toggleStatus={pauseCheck} normalizeStatus={normalCheck} name={"martin"} pauseSlider={pauseSlider} videoID={"O_JAZNbj8Pg"}/>
+            <CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={martin} width={window.innerWidth / 2} height={window.innerHeight - 100} toggleStatus={pauseCheck} normalizeStatus={normalCheck} name={"martin"} pauseSlider={pauseSlider} videoID={"O_JAZNbj8Pg"}/>
           </div>
           <div className="col-lg-5">
-            <CurveRender videoHandler={handleVideoChange} audio={fernanda} width={window.innerWidth / 2} height={window.innerHeight - 100} toggleStatus={pauseCheck} normalizeStatus={normalCheck} name={"fernanda"} pauseSlider={pauseSlider} videoID={"u5JV88yPoGc"}/>
+            <CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={fernanda} width={window.innerWidth / 2} height={window.innerHeight - 100} toggleStatus={pauseCheck} normalizeStatus={normalCheck} name={"fernanda"} pauseSlider={pauseSlider} videoID={"u5JV88yPoGc"}/>
           </div>
         </div>
       </div>
@@ -98,8 +111,8 @@ function Homepage() {
         <iframe
           id="ytplayer"
           type="text/html"
-          width="320"
-          height="360"
+          width="260"
+          height="280"
           // &start=${videoTime}
           src={`https://www.youtube.com/embed/${videoId}?autoplay=1&start=${videoTime}`}
           frameBorder="0"
