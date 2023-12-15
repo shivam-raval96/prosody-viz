@@ -45,7 +45,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, toggleStatus, normalizeS
 
     let pitchScale = d3.scaleLinear()
     .domain(domain)
-    .range([height / 2, margin.top]);
+    .range([0, 0]);
 
    
     const g = svg.append('g');
