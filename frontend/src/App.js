@@ -14,7 +14,7 @@ function App() {
   return (
     <>
       <nav class="shift navbar navbar-expand-lg navbar-light">
-        <a class="navbar-brand" href="#">SpeechViz</a>
+        <a class="navbar-brand" href="#"><h2>SpeechViz</h2></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

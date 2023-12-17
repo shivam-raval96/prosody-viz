@@ -52,7 +52,7 @@ const Legend = ({width, height, toggleStatus, normalizeStatus}) => {
 
         //Draw the rectangle and fill with gradient
         svg.append("rect")
-            .attr("width", 200)
+            .attr("width", width)
             .attr("height", height)
             .style("fill", "url(#linear-gradient)");
 

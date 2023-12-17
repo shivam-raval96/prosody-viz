@@ -154,7 +154,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, toggleStatus, normalizeS
                 let actualWord = audio.word[i];
                 mouseOver(event, j, name, hoverWidth, toggleStatus, text, actualWord);
               }).on('click', function (d) {
-                videoHandler(j*30, videoID);
+                videoHandler(Math.max(0, Math.round(audio.start[i] - 5)), videoID);
               }).on("mouseout", function(d) {
                 mouseOut(j, name, hoverWidth, toggleStatus);
               });

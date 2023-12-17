@@ -14,7 +14,7 @@ function Homepage() {
   const [pauseCheck, pauseCheckStatus] = useState(true);
   const [normalCheck, setNormalStatus] = useState(false);
   const [wordDensityCheck, setWordDensityCheck] = useState(false);
-  const [pauseSlider, setPauseSlider] = useState(0.5);
+  const [pauseSlider, setPauseSlider] = useState(1.0);
 
   const [showVideo, setShowVideo] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
@@ -65,34 +65,38 @@ function Homepage() {
   return (
     <>
       <div className="container-fluid">
-        <div className="row gx-2">
+        <div className="row no-gutters">
           <div className="col-lg-2">
         <div className="container-fluid">
-        <div className="row gx-2">
-            <div class="card">
-              <h3 class="card-header">Controls</h3>
-            <div class="form-check form-switch">
-              <input class="form-check-input" checked={pauseCheck} onChange={toggle} type="checkbox" id="pauseSwitch" />
-              <label class="form-check-label" for="pauseSwitch">View Pause</label>
-            </div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
-              <label class="form-check-label" for="normalSwitch">Normalize</label>
-            </div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" checked={wordDensityCheck} onChange={densityToggle} type="checkbox" id="normalSwitch" />
-              <label class="form-check-label" for="normalSwitch">View Word Density</label>
-            </div>
-            <label for="customRange3" id="pauseRange" class="form-label">Pause Length: 0.5 seconds</label>
-            <input onChange={pauseSlide} type="range" class="form-range" min="0.2" max="3" step="0.2" id="customRange3"></input>
-            </div>
+          <div className="row no-gutters">
+              <div class="card">
+                <h3 class="card-header bg-white">Controls</h3>
+              <div class="form-check form-switch">
+                <input class="form-check-input" checked={pauseCheck} onChange={toggle} type="checkbox" id="pauseSwitch" />
+                <label class="form-check-label" for="pauseSwitch">View Pause</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
+                <label class="form-check-label" for="normalSwitch">Normalize</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" checked={wordDensityCheck} onChange={densityToggle} type="checkbox" id="normalSwitch" />
+                <label class="form-check-label" for="normalSwitch">View Word Density</label>
+              </div>
+              <label for="customRange3" id="pauseRange" class="form-label">Pause Length: 1.0 seconds</label>
+              <input onChange={pauseSlide} type="range" class="form-range" min="0.5" max="2" step="0.1" value={pauseSlider} id="customRange3"></input>
+          </div>
+
+
             <div class="card legend-card">
-              <h3 class="card-header">Legend</h3>
+              <h3 class="card-header bg-white">Legend</h3>
             <div class="legend">
-              <Legend width={window.innerWidth} height={50} toggleStatus={pauseCheck} normalizeStatus={normalCheck}/>
+              <Legend width={200} height={50} toggleStatus={pauseCheck} normalizeStatus={normalCheck}/>
             </div>
-            <p>Low Pitch............High Pitch</p>
-            <p>Each line represents 30 seconds</p>
+            <p><b>Low Pitch</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>High Pitch</b></p>
+            <hr></hr>
+            <p>Volume is represented with the width and each line represents 30 seconds of speaking</p>
+            <hr></hr>
             <p>Click on the graph to view the part of the audio/speech.</p>
             </div>
           </div>
@@ -108,6 +112,7 @@ function Homepage() {
         </div>
       </div>
       {showVideo && videoId && (
+        <div className="videoPlayerContainer">
         <iframe
           id="ytplayer"
           type="text/html"
@@ -118,6 +123,10 @@ function Homepage() {
           frameBorder="0"
           class="videoPlayer"
         ></iframe>
+        <button onClick={() => setShowVideo(false)} className="btn dismiss-button">
+          Dismiss
+        </button>
+        </div>
     )}
     </>
   );
