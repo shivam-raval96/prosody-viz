@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
 // set up react component
-const Legend = ({width, height, toggleStatus, normalizeStatus}) => {
+const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
     const margin = {left: 0, top:200}
 
     const svgRef = useRef();
@@ -17,16 +17,35 @@ const Legend = ({width, height, toggleStatus, normalizeStatus}) => {
         // Clear previous content
         svg.selectAll('*').remove();
 
-        let domain = [0, 125, 300];
+        let domain = [75, 125, 300];;
         if (normalizeStatus) {
           domain = [0, 150, 300];
         }
-        let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
+        //let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
+        let scaleAnomaly =  d3.scaleLinear()
+        .range(['#5b64ad', '#66bbaa','#d1eda6', '#f0f9aa',
+        '#fed283', '#ef704a','#cd495b']) 
+        .interpolate(d3.interpolateRgb)
         .domain(domain);
         if (!normalizeStatus) {
-          scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
-          .domain(domain);
+         // scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
+         scaleAnomaly =  d3.scaleLinear()
+         .range(['#062f62', '#5f9bc8', '#dce4eb',
+         '#f9e9de', '#f2a98a', '#b32833']) 
+         .interpolate(d3.interpolateRgb)
+         .domain(domain);
+
+          
+
         }
+
+        if (pauseStatus) {
+          scaleAnomaly =  d3.scaleLinear()
+         .range(['#f0f0f0','#f0f0f0']) 
+         .interpolate(d3.interpolateRgb)
+         .domain(domain);
+        }
+
     
             /// legend !! 
         //Append a defs (for definition) element to your SVG
@@ -38,9 +57,9 @@ const Legend = ({width, height, toggleStatus, normalizeStatus}) => {
 
         //Vertical gradient
         linearGradient
-        .attr("x1", "0%")
+        .attr("x1", "5%")
         .attr("y1", "0%")
-        .attr("x2", "100%")
+        .attr("x2", "95%")
         .attr("y2", "0%");
 
             //Append multiple color stops by using D3's data/enter step

@@ -6,6 +6,7 @@ svg {
   /* border-radius: .5rem; */
   border: 1px solid #282c34;
   width: 100%;
+  
 }
 
 .legend {
@@ -15,6 +16,8 @@ svg {
 .card {
   margin-top: 40px;
   margin-bottom: 20px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* X-offset, Y-offset, blur radius, color */
+  border: 1px solid #282c34;
 }
 
 .shift {
@@ -41,10 +44,12 @@ svg {
   border-radius: 4px;
   pointer-events: none;
   width: 300px;
+  z-index: 10;
 }
 
 .card-header {
   color: white;
+  
 
 }
 
@@ -52,7 +57,24 @@ svg {
   position: relative;
   width: 100%;
   height: 100%;
+  top: 0; /* Positioned at the top of the container */
+  left: 0; /* Positioned at the right of the container */
 
+}
+
+.stats {
+  position: absolute;
+  width: 30%;
+  height: 17%;
+  top:83%; /* Positioned at the top of the container */
+  left: 25px; /* Positioned at the right of the container */
+  border: 1px solid #282c34;
+  background: rgba(255, 255, 255, 0.9); /* Example background color */
+  font-size: 12px; /* Example font size */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* X-offset, Y-offset, blur radius, color */
+  border-radius: 10px; /* rounded corners */
+  padding-left: 5px;
+  padding-top: 5px;
 }
 
 .dismiss-button {
@@ -66,6 +88,96 @@ svg {
   cursor: pointer;
   font-size: 16px; /* Example font size */
   border-radius: 0 0 0 5px; /* Rounded corner on the bottom-left */
+}
+
+.rec1 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 18%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+}
+
+.rec2 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 59%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+}
+
+.player1 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 3.5%; /* Positioned at the right of the container */
+  width: 300px;
+  height: 40px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* X-offset, Y-offset, blur radius, color */
+  border-radius: 20px; /* rounded corners */
+
+}
+
+.player2 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 3.5%; /* Positioned at the right of the container */
+  width: 300px;
+  height: 40px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* X-offset, Y-offset, blur radius, color */
+  border-radius: 20px; /* rounded corners */
+
+}
+
+.title1 {
+  position: absolute; /* Absolute position for the button */
+  top: 6.5%; /* Positioned at the top of the container */
+  left: 25%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+  font-size: 10px; /* Example font size */
+
+}
+
+.title2 {
+  position: absolute; /* Absolute position for the button */
+  top: 6.5%; /* Positioned at the top of the container */
+  left: 66%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+  font-size: 10px; /* Example font size */
+
+}
+.url1 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 42%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+}
+.url2 {
+  position: absolute; /* Absolute position for the button */
+  top: 2%; /* Positioned at the top of the container */
+  left: 83%; /* Positioned at the right of the container */
+  width: 100;
+  height: 20;
+}
+.speaker2 {
+  position: absolute; /* Absolute position for the button */
+  top: 8%; /* Positioned at the top of the container */
+  left: 58%; /* Positioned at the right of the container */
+  font-size: 16px; /* Example font size */
+  border-radius: 20px; /* rounded corners */
+  z-index: 0;
+}
+
+.speaker1 {
+  position: absolute; /* Absolute position for the button */
+  top: 8%; /* Positioned at the top of the container */
+  left: 17%; /* Positioned at the right of the container */
+  font-size: 16px; /* Example font size */
+  border-radius: 20px; /* rounded corners */
+  z-index: 0;
+
 }
 
 .about {

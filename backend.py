@@ -18,6 +18,8 @@ from scipy.io import wavfile
 import resampy
 from scipy import interpolate
 import pysptk
+from pytube import YouTube
+import os
 
 try:
      _create_unverified_https_context = ssl._create_unverified_context
@@ -27,7 +29,9 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
  
 
+import sys
 
+np.set_printoptions(threshold=sys.maxsize)
 
 apikey = '_K65u9xgONT0FHDv47PToenDbjW2rBnlveyMircBSJOh'
 url = 'https://api.us-east.speech-to-text.watson.cloud.ibm.com/instances/cfbb148c-742d-4321-8ce5-d49ff0afa632'
@@ -53,29 +57,25 @@ def amplitude_envelope(signal, frame_size, hop_length):
     return np.array(amplitude_envelope)
 
 
-# Serve home route
-@app.route("/")
-def home():
-    return send_from_directory(app.static_folder, "index.html")
-# Performs selected dimensionality reduction method (reductionMethod) on uploaded data (data), considering selected parameters (perplexity, selectedCol)
-@app.route("/transcribe", methods=["POST"])
-def generate():
-    '''if 'file' not in request.files:
-            return 'No file part', 400
+def download_audio_youtube(url, name):
+    yt = YouTube(url,use_oauth=True, allow_oauth_cache=True)
+    video = yt.streams.filter(only_audio=True).first()
+    out_file = video.download(output_path='./')
+    title = yt.title
 
-    file = request.files['file']
-    if file.filename == '':
-            return 'No selected file', 400
+    audio = AudioSegment.from_file(out_file)
+    new_file = name
+    #audio = audio.set_channels(1)  # Set to mono
+    #audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
+    audio.export(new_file, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
 
-    filename = secure_filename(file.filename)
-    file.save('./'+filename)
+    os.remove(out_file)
+
+    return new_file, title
 
 
-    audio = AudioSegment.from_file(filename)  # replace with your file and format
-    audio = audio.set_channels(1)  # Set to mono
-    audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
-    audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
-
+def process_audio_data(filename):
+     
     audio,sr = librosa.load(filename)
     FRAME_SIZE = 512
     HOP_LENGTH = 512
@@ -85,67 +85,112 @@ def generate():
 
 
     snd = parselmouth.Sound(filename)
+
     pitch = snd.to_pitch()
-    fs, x = wavfile.read(filename)
-    # We can resample this to any sampling rate we like, say 16000 Hz
-    y_low = resampy.resample(x, fs, 16000)
-    #assert fs == 16000
-    f0 = pysptk.rapt(y_low.astype(np.float32), fs=16000, hopsize=80, min=60, max=500, otype="f0")
-    xval = np.linspace(0,pitch.xs()[-1], len(f0))
+    pitch_values = pitch.selected_array['frequency']
 
     tck = interpolate.splrep(t, ae, s=0)
     xnew = np.arange(0, pitch.xs()[-1], 0.01)
     ynew = interpolate.splev(xnew, tck, der=0)
 
-    tckp = interpolate.splrep(xval, f0, s=0)
+    tckp = interpolate.splrep(pitch.xs(), pitch_values, s=0)
     xnewp = np.arange(0, pitch.xs()[-1], 0.01)
     ynewp = interpolate.splev(xnewp, tckp, der=0)
-
-    ynewp[ynewp<50] = np.nan
-    ynewp[ynewp>350] = np.nan
-
-    time = xnew
-    time_new = []
+    pvals = [p if (p >= 50 and p <= 350) else None for p in ynewp]
+    ynewp = np.array(pvals,dtype=float)
     inte = []
     pit = []
 
-
     with open(filename, 'rb') as f:
         results = stt.recognize(audio = f, content_type = 'audio/wav', model = 'en-US_Multimedia', timestamps = True, speaker_labels = True).get_result()
-        
-    df_word = pd.DataFrame(results['results'][0]['alternatives'][0]['timestamps'])
+    
+    df_word = pd.DataFrame()
 
+
+    for i in range(len(results['results'])):
+        df_word = df_word.append(results['results'][i]['alternatives'][0]['timestamps'])
+    
     df_word = df_word.rename(columns={0: "Word", 1:"Start",2: "End"}).reset_index(drop=True)
+
+
+   #df_word = pd.read_csv('test.csv')
+
     df_word["length"] = df_word["Word"].apply(len)
     df_word['time_spent'] = df_word['End'] - df_word['Start']
     df_word['std_time_spent'] = df_word['time_spent']/df_word['length']
     df_word["speed"] = df_word["length"]/df_word["time_spent"]
     #df_word["post_space"] = np.append(np.array(df_word["Start"][1:]) - np.array(df_word["End"][:-1]),0)
-
+    
 
     post =  df_word['Start'][1:].values - df_word['End'][:-1].values
     df_word["time"] = df_word["Start"] + (df_word["End"] - df_word["Start"])/2
 
     df_word['post_space'] = np.append(post,[np.nan])
-
+    
     for i in range(len(df_word)):
-        t1 = df_word['Start'][i]
-        t2 = df_word['End'][i]
-        idx1 = (time>t1) & (time<t2)
-        int_avg = np.nanmean(ynew[idx1])
-        inte.append(int_avg)
-        pit_avg = np.nanmean(ynewp[idx1])
-        pit.append(pit_avg)
+            t1 = df_word['Start'][i]
+            t2 = df_word['End'][i]
+            idx_amp = (xnew>t1) & (xnew<t2)
+            int_avg = np.nanmean(ynew[idx_amp])
+            inte.append(int_avg)
+            idx_p = (xnewp>t1) & (xnewp<t2)
+            
+            pit_avg = np.nanmean(ynewp[idx_p])
+            pit.append(pit_avg)
 
-    df_word['amplitude'] = inte/max(inte)
-    df_word['pitch'] = pit'''
+    df_word['amplitude'] = inte
+    df_word['pitch'] = pit
+
+    return df_word
 
 
-    df_word = pd.read_csv('martin_hbs2.csv').drop(columns=['num1','num2','num3'])
+# Serve home route
+@app.route("/")
+def home():
+    return send_from_directory(app.static_folder, "index.html")
+# Performs selected dimensionality reduction method (reductionMethod) on uploaded data (data), considering selected parameters (perplexity, selectedCol)
+@app.route("/transcribe", methods=["POST"])
+def transcribe():
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('url', type=str)
+    parser.add_argument('filename', type=str)
+
+    args = parser.parse_args()
+    url = args['url']
+    filename = args['filename']
+    _, title = download_audio_youtube("https://www.youtube.com/watch?v="+url, filename)
+
+
+
+    
+    df_word = process_audio_data(filename)
+    #df_word = pd.read_csv('kndebate.csv')#.drop(columns=['num1','num2','num3'])
+    df_word.to_csv(title+'.csv',index=False)
     
     
+    return df_word.to_json(orient="split"), title
+
+@app.route("/rec-transcribe", methods=["POST"])
+def rec_transcribe():
+    if 'file' not in request.files:
+            return 'No file part', 400
+
+    file = request.files['file']
+    if file.filename == '':
+            return 'No selected file', 400
+
+    filename = secure_filename(file.filename)
+    file.save('./'+filename)
+
+    audio = AudioSegment.from_file(filename)
+    audio = audio.set_channels(1)  # Set to mono
+    audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
+    audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
+
+    df_word = process_audio_data(filename)
+
     return df_word.to_json(orient="split")
-
 
 
 
