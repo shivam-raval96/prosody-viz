@@ -302,7 +302,7 @@ function Homepage() {
             <div className="card legend-card">
               <h3 className="card-header bg-white">Legend</h3>
             <div className="legend">
-              <Legend width={225} height={50} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
+              <Legend width={225} height={40} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
             </div>
             <p><b>Low Pitch</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>High Pitch</b></p>
             <hr></hr>
