@@ -9,17 +9,19 @@ import numpy as np
 import heapq
 import json
 import ssl
-from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
-from ibm_watson import SpeechToTextV1
+#from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+#from ibm_watson import SpeechToTextV1
+
 from pydub import AudioSegment
 import parselmouth
 import librosa
 from scipy.io import wavfile
 import resampy
 from scipy import interpolate
-import pysptk
+#import pysptk
 from pytube import YouTube
 import os
+import whisper_timestamped as whisper
 
 try:
      _create_unverified_https_context = ssl._create_unverified_context
@@ -33,11 +35,13 @@ import sys
 
 np.set_printoptions(threshold=sys.maxsize)
 
-apikey = '_K65u9xgONT0FHDv47PToenDbjW2rBnlveyMircBSJOh'
-url = 'https://api.us-east.speech-to-text.watson.cloud.ibm.com/instances/cfbb148c-742d-4321-8ce5-d49ff0afa632'
-authenticator = IAMAuthenticator(apikey)
-stt  = SpeechToTextV1(authenticator = authenticator)
-stt.set_service_url(url)
+model=whisper.load_model("medium")
+
+#apikey = '_K65u9xgONT0FHDv47PToenDbjW2rBnlveyMircBSJOh'
+#url = 'https://api.us-east.speech-to-text.watson.cloud.ibm.com/instances/cfbb148c-742d-4321-8ce5-d49ff0afa632'
+#authenticator = IAMAuthenticator(apikey)
+#stt  = SpeechToTextV1(authenticator = authenticator)
+#stt.set_service_url(url)
 
 app = Flask(__name__, static_url_path='', static_folder='/build')
 CORS(app)
@@ -57,8 +61,10 @@ def amplitude_envelope(signal, frame_size, hop_length):
     return np.array(amplitude_envelope)
 
 
+
+
 def download_audio_youtube(url, name):
-    yt = YouTube(url,use_oauth=True, allow_oauth_cache=True)
+    yt = YouTube(url,use_oauth=False, allow_oauth_cache=True)
     video = yt.streams.filter(only_audio=True).first()
     out_file = video.download(output_path='./')
     title = yt.title
@@ -73,12 +79,24 @@ def download_audio_youtube(url, name):
 
     return new_file, title
 
-
 def process_audio_data(filename):
-     
-    audio,sr = librosa.load(filename)
+    #Maybe adjust based on audio?
+    MIN_SENTENCE_CONFIDENCE_THRESHOLD=0.4 #For sentence confidence
+    MIN_WORD_CONFIDENCE_THRESHOLD=0.3 #For sentence confidence 
+    
+
+    #TRANSCRIPTION PROCESS
+    audio=whisper.load_audio(filename)
+    results=whisper.transcribe(model, audio, language="en")
+        
+    with open('muddledData.json','w') as f:
+        json.dump(results,f,indent=2,ensure_ascii=True)
+    #BASIC FEATURES (w/o transcription needed)
+             
+    """audio,sr = librosa.load(filename)"""
     FRAME_SIZE = 512
     HOP_LENGTH = 512
+    
     ae = amplitude_envelope(audio, FRAME_SIZE, HOP_LENGTH)
     frames = range(len(ae))
     t = librosa.frames_to_time(frames, hop_length=HOP_LENGTH)
@@ -101,25 +119,45 @@ def process_audio_data(filename):
     inte = []
     pit = []
 
-    with open(filename, 'rb') as f:
+    """with open(filename, 'rb') as f:
+        print("Reading "+filename)
         results = stt.recognize(audio = f, content_type = 'audio/wav', model = 'en-US_Multimedia', timestamps = True, speaker_labels = True).get_result()
+   """ 
+    #Transcription Values Calculation
     
-    df_word = pd.DataFrame()
 
+    lst = []
 
-    for i in range(len(results['results'])):
+        
+  #  print("len1: "+str(len(results["segments"])))
+    
+    for i in range(len(results["segments"])):
+        if results["segments"][i]["confidence"]<MIN_SENTENCE_CONFIDENCE_THRESHOLD:
+            print("Skipping Sentence "+str(i))
+            continue #Skips sentence fully
+     #   print("len2: "+str(len(results["segments"][i]["words"])))
+        for j in range(len(results["segments"][i]["words"])):
+            if results["segments"][i]["words"][j]["confidence"]<MIN_WORD_CONFIDENCE_THRESHOLD:
+                print("Skipping Word "+str(i)+ ", "+str(j))
+                continue #Skips word    
+            lst.append([results["segments"][i]["words"][j]["text"],results["segments"][i]["words"][j]["start"],results["segments"][i]["words"][j]["end"],0,0,0,0,0,0,0])
+    #        print(results["segments"][i]["words"][j]["text"])
+   # print(lst)
+    """for i in range(len(results['results'])):
         df_word = df_word.append(results['results'][i]['alternatives'][0]['timestamps'])
+    """
     
-    df_word = df_word.rename(columns={0: "Word", 1:"Start",2: "End"}).reset_index(drop=True)
+    df_word = pd.DataFrame(lst, columns=['Word', 'Start', 'End','length','time_spent','std_time_spent','speed','post_space','amplitude','pitch'])
+    
+    #, 3: "length", 4: "time_spent", 5: "std_time_spent", 6: "speed", 7: "post_space", 8: "amplitude", 9:"pitch"
+#    df_word = df_word.rename(columns={0: "Word", 1:"Start",2: "End"}).reset_index(drop=True)
 
-
-   #df_word = pd.read_csv('test.csv')
 
     df_word["length"] = df_word["Word"].apply(len)
     df_word['time_spent'] = df_word['End'] - df_word['Start']
     df_word['std_time_spent'] = df_word['time_spent']/df_word['length']
     df_word["speed"] = df_word["length"]/df_word["time_spent"]
-    #df_word["post_space"] = np.append(np.array(df_word["Start"][1:]) - np.array(df_word["End"][:-1]),0)
+    df_word["post_space"] = np.append(np.array(df_word["Start"][1:]) - np.array(df_word["End"][:-1]),0)
     
 
     post =  df_word['Start'][1:].values - df_word['End'][:-1].values
@@ -144,6 +182,7 @@ def process_audio_data(filename):
     return df_word
 
 
+
 # Serve home route
 @app.route("/")
 def home():
@@ -166,7 +205,8 @@ def transcribe():
     
     df_word = process_audio_data(filename)
     #df_word = pd.read_csv('kndebate.csv')#.drop(columns=['num1','num2','num3'])
-    df_word.to_csv(title+'.csv',index=False)
+    ###FIX TO BRING BACK TITLE
+    df_word.to_csv('TranscribedAudio1.csv',index=False)
     
     
     return df_word.to_json(orient="split"), title
@@ -174,11 +214,15 @@ def transcribe():
 @app.route("/rec-transcribe", methods=["POST"])
 def rec_transcribe():
     if 'file' not in request.files:
+            print("NO FILE PART")
             return 'No file part', 400
 
     file = request.files['file']
     if file.filename == '':
+            
+            print("NO SELECTED PART")
             return 'No selected file', 400
+    print("Reading file: "+file.filename)
 
     filename = secure_filename(file.filename)
     file.save('./'+filename)
@@ -189,9 +233,37 @@ def rec_transcribe():
     audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
 
     df_word = process_audio_data(filename)
+    df_word.to_csv('TranscribedAudio2.csv',index=False)
 
     return df_word.to_json(orient="split")
 
+@app.route("/upload-transcribe", methods=["POST"])
+def upload_transcribe():
+    if 'file' not in request.files:
+            print("NO FILE PART")
+            return 'No file part', 400
+
+    file = request.files['file']
+    if file.filename == '':
+            
+            print("NO SELECTED PART")
+            return 'No selected file', 400
+    print("Reading file: "+file.filename)
+
+    filename = secure_filename(file.filename)
+    file.save(filename)
+
+    audio = AudioSegment.from_file(filename)
+    audio = audio.set_channels(1)  # Set to mono
+    audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
+    audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
+
+    df_word = process_audio_data(filename)
+    df_word.to_csv('TranscribedAudio3.csv',index=False)
+
+##Faulty use of "Success" as return variable
+    print("SUCCESS")
+    return df_word.to_json(orient="split"), file.filename
 
 
 # Run app in debug mode

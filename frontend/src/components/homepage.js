@@ -2,6 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CurveRender from './curverender';
 import Legend from './legend';
+
+import { styled } from '@mui/material/styles';
+import Button from '@mui/material/Button';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 //import data3 from "../data/obama_speech.csv"; //k0jJL_YFyIU //Barack Obama's final speech as president – video highlights
 import data3 from "../data/martin_hbs2.csv"; //O_JAZNbj8Pg //Augmenting Human and Machine Intelligence with Data Visualization (Martin Wattenberg)
 //import data3 from "../data/finale.csv"; //4lIr8rgo5zE
@@ -17,6 +21,7 @@ import SendIcon from '@mui/icons-material/Send';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Slider from '@mui/material/Slider';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 
 //import TextRender from './components/textrender';
 import * as d3 from 'd3';
@@ -27,6 +32,13 @@ function Homepage() {
   const [loading1, setLoading1] = useState(false);
   const [loading2, setLoading2] = useState(false);
   const [tiled, setTiled] = useState(false);
+  const [error, setError] = useState();
+  
+  const [file, setFile] = useState();
+  const [uploadedFile, setUploadedFile] = useState();
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedFileURL, setUploadedFileURL] =useState();
+
 
   const [speaker1, setData] = useState(null);
   const [speaker2, setData2] = useState(null);
@@ -107,11 +119,86 @@ function Homepage() {
     // You might want to update the data or do something else when the toggle is hit
   };
 
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  });
+  
+  const handleUpload = async (event, callback,callback2,callback3) => {
+      
+    const file = event.target.files[0];
+    //Temporarily all on 1
+    callback3(true)
+    if (file) {
+      console.log('File uploaded:', file.name);
+      // Perform further actions with the file if needed
+    }
+    if (!file) {
+      alert('Please select a file first!');
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post(localDevURL + "upload-transcribe", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }).then((response) => {
+        let loadedData = response.data.data
+        let audio = {
+          time: [],
+          start: [],
+          end: [],
+          word: [],
+          amp: [],
+          pitch: []
+        };
+
+        loadedData.forEach((e) => {
+          audio.time.push(e[1])
+          audio.start.push(e[1])
+          audio.end.push(e[2])
+          audio.word.push(e[0])
+          audio.amp.push(e[9]) //8
+          audio.pitch.push(e[10]);//11
+      });
+      
+
+      
+      audio.amp = movingAverage(audio.amp, 10);
+      audio.pitch = movingAverage(audio.pitch, 10);
+      callback(audio);
+      callback2(response.statusText);
+      callback3(false);
+      });
+
+      //if (!response.ok) throw new Error('Something went wrong');
+      
+    } catch (error) {
+      console.error('Error:', error);
+      callback3(false);
+    }
+  };
+/*  function InputFileUpload() {
+    
+    return (
+      
+    );
+  }*/
   const handleChange = (event, newValue) => {
     setValue(newValue);
   }
-
+  
 
   const timeSlide = (event) => {
     setTimeSlider(event.target.value);
@@ -119,7 +206,8 @@ function Homepage() {
     document.querySelector("#timeRange").innerHTML = "Each line represents " + event.target.value + " seconds of speaking"
     // You might want to update the data or do something else when the toggle is hit
   };
-  const sendAudioToTranscribe= async (audioBlob, filename, callback) => {
+  const sendAudioToTranscribe= async (audioBlob, filename, callback, callback2, callback3) => {
+    callback3(true);
     const formData = new FormData();
     formData.append("file", audioBlob, filename);
   
@@ -153,6 +241,8 @@ function Homepage() {
         audio.amp = movingAverage(audio.amp, 10);
         audio.pitch = movingAverage(audio.pitch, 10);
         callback(audio)
+        callback2(response.statusText)
+        callback3(false)
 
         });
   
@@ -160,7 +250,9 @@ function Homepage() {
   
     } catch (error) {
         console.error('Error:', error);
+        callback3(false);
     }
+    
   };
 
   const handleSend = async (filename, url, callback, callback2, callback3) => {
@@ -219,7 +311,7 @@ function Homepage() {
   }, []);
 
     useEffect(() => {
-      if(blob){sendAudioToTranscribe(blob,'rec1.wav',setData)
+      if(blob){sendAudioToTranscribe(blob,'rec1.wav',setData,setVideoTitle1,setLoading1)
       const newAudioUrl = URL.createObjectURL(blob);
       setAudioUrl(newAudioUrl);
       setSpeaker1url("Enter YouTube link")
@@ -232,7 +324,7 @@ function Homepage() {
     }, [blob]);
 
     useEffect(() => {
-      if(blob2){sendAudioToTranscribe(blob2,'rec2.wav',setData2)
+      if(blob2){sendAudioToTranscribe(blob2,'rec2.wav',setData2,setVideoTitle2,setLoading2)
       const newAudioUrl2 = URL.createObjectURL(blob2);
       setAudioUrl2(newAudioUrl2);
       setSpeaker2url("Enter YouTube link")
@@ -256,8 +348,13 @@ function Homepage() {
     <>
       <div className="container-fluid">
         <div className="row no-gutters">
+          
           <div className="col-lg-2">
+            
+          <div className="upload2">
+          </div>
         <div className="container-fluid">
+          
           <div className="row no-gutters">
               <div className="card">
                 <h3 className="card-header bg-white">Controls</h3>
@@ -312,15 +409,34 @@ function Homepage() {
             </div>
           </div>
         </div>
+        
           </div>
           <div id="tooltip"></div>
-          <div className="rec1">
+          <div className="rec1" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <AudioRecorder onRecordingComplete={setBlob} recorderControls={recorder} />
           <div>
           {audioUrl && <audio controls className="player1" src={audioUrl}></audio>}
           </div>
-          
+        
+       
+          <Button
+            component="label"
+            role={undefined}
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<CloudUploadIcon />}
+            >
+            Upload file
+              <VisuallyHiddenInput type="file" 
+              accept=".wav,video/mp4"
+              onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1 )}
+              />
+          </Button>     
           </div>
+          
+          
+          
+          
           <div className="title1">
           Video Title: {videotitle1}
           </div>
@@ -333,26 +449,48 @@ function Homepage() {
           value={speaker1url}
           onChange={(e)=>setSpeaker1url(e.target.value)}
           size="small"
-        />          
+        />
+                  
         </Tooltip>
+        
         <IconButton aria-label="send">
 
         {(loading1)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1)}/>}
 
         </IconButton>
+        
+        
         </div>
-          <div className="rec2">
+        
+        <div className="rec2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
           <AudioRecorder onRecordingComplete={setBlob2} recorderControls={recorder2} />
+          
           <div>
           {audioUrl2 && <audio controls className="player2" src={audioUrl2}></audio>}
           </div>
+          
+          <Button
+            component="label"
+            role={undefined}
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<CloudUploadIcon />}
+            >
+            Upload file
+              <VisuallyHiddenInput type="file" 
+              accept=".wav,video/mp4"
+              onChange={(event) => handleUpload(event,setData2,setVideoTitle2,setLoading2 )}
+              />
+          </Button>   
+          
           </div>
+          
           <div className="title2">
           Video Title: {videotitle2}
           </div>
           <div className="url2">
           <Tooltip title="Enter Youtube link">
-          <TextField
+           <TextField
           label="Speaker 2"
           id="outlined-size-small"
           value={speaker2url}
@@ -367,10 +505,10 @@ function Homepage() {
         </IconButton>
         </div>
           <div className="col-lg-5 speaker1">
-            {(speaker1)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker1} width={window.innerWidth / 2} height={window.innerHeight - 100} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker1"} pauseSlider={pauseSlider} speedSlider={speedvalue} videoID={speaker1url} timeSlider={timeSlider} videoTime={videoTime}/>:null}
+            {(speaker1)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker1} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker1"} pauseSlider={pauseSlider} speedSlider={speedvalue} videoID={speaker1url} timeSlider={timeSlider} videoTime={videoTime}/>:null}
           </div>
           <div className="col-lg-5 speaker2">
-          {(speaker2)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker2} width={window.innerWidth / 2} height={window.innerHeight - 100} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker2"} pauseSlider={pauseSlider} speedSlider={speedvalue} timeSlider={timeSlider} videoID={speaker2url}/>:null}
+          {(speaker2)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker2} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker2"} pauseSlider={pauseSlider} speedSlider={speedvalue} timeSlider={timeSlider} videoID={speaker2url}/>:null}
           </div>
         </div>
       </div>

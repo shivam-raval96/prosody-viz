@@ -12,12 +12,12 @@ import ssl
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
 from pydub import AudioSegment
-import parselmouth
+#import parselmouth
 import librosa
 from scipy.io import wavfile
 import resampy
 from scipy import interpolate
-import pysptk
+#import pysptk
 
 try:
      _create_unverified_https_context = ssl._create_unverified_context

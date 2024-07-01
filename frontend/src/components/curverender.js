@@ -447,7 +447,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     <>
     <div className="container">
       <svg ref={svgRef} height={height}></svg>
-      <div className="stats">
+      
+      <div className="stats" style={{ height: height*0.25 }}>
         <h6><b>Speaker stats</b></h6>
         Pauses per minute: {pausespm}<br/>
         Words per minute: {wordspm}<br/>
