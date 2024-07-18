@@ -62,6 +62,9 @@ function Homepage() {
   const [timeSlider, setTimeSlider] = useState(30);
   const [speedvalue, setValue] = React.useState([0.05,0.07]);
 
+  const[phraseMatches1, setPhraseMatches1] =useState([[]]); //index -> audio 1, value -> audio2 ; searching from audio 1 is O(1), searching from audio 2 is O(n)
+  const[phraseMatches2, setPhraseMatches2] =useState([[]]); //index -> audio 1, value -> audio2 ; searching from audio 1 is O(1), searching from audio 2 is O(n)
+
 
   const [blob, setBlob] = useState(null);
   const [blob2, setBlob2] = useState(null);
@@ -69,7 +72,21 @@ function Homepage() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [audioUrl2, setAudioUrl2] = useState(null);
 
+  const [averageAmplitude1, setAverageAmplitude1] =useState(0);
+  const [averageSpeed1, setAverageSpeed1] =useState(0);
+  const [averagePitch1, setAveragePitch1] =useState(0);
 
+  
+  const [averageAmplitude2, setAverageAmplitude2] =useState(0);
+  const [averageSpeed2, setAverageSpeed2] =useState(0);
+  const [averagePitch2, setAveragePitch2] =useState(0);
+
+  const [phraseStart1, setPhraseStart1]=useState([]);
+  const [phraseStart2, setPhraseStart2]=useState([]);
+
+  
+  const [phraseEnd1, setPhraseEnd1]=useState([]);
+  const [phraseEnd2, setPhraseEnd2]=useState([]);
   const recorder = useAudioRecorder();
   const recorder2 = useAudioRecorder();
 
@@ -78,11 +95,33 @@ function Homepage() {
   const [videoTime, setVideoTime] = useState(0);
   const [videoId, setVideoId] = useState(null);
 
+
+  const [dtwData1, setDtwData1] = useState(-1);
+  const [dtwData2, setDtwData2] = useState(-1);
+
   const handleVideoChange = (time, id) => {
+    return;
     setVideoTime(time);
     setVideoId(id);
     setShowVideo(true);
   };
+
+  
+  const highlightDTWMatch= (i, isOne)=>{
+    console.log("Path clicked with index:", i, isOne);
+    console.log("PM: "+(isOne?phraseMatches1:phraseMatches2)[i]);
+    if(i<0){return;}
+    if(!isOne){
+      setDtwData1(phraseMatches1[i]);
+      console.log("DTWDATA1: "+dtwData1);
+
+    }
+    else{
+      setDtwData2(phraseMatches2[i]);
+      console.log("DTWDATA2: "+dtwData2);
+    }
+  }
+
 
   const toggle = (event) => {
     pauseCheckStatus(event.target.checked);
@@ -131,10 +170,11 @@ function Homepage() {
     width: 1,
   });
   
-  const handleUpload = async (event, callback,callback2,callback3) => {
+  const handleUpload = async (event, callback,callback2,callback3,isOne) => {
       
     const file = event.target.files[0];
-    //Temporarily all on 1
+    
+    console.log("isOne"+isOne)
     callback3(true)
     if (file) {
       console.log('File uploaded:', file.name);
@@ -147,13 +187,115 @@ function Homepage() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append("isOne",isOne?"1":"0");
 
     try {
       const response = await axios.post(localDevURL + "upload-transcribe", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
-      }).then((response) => {
+      });
+      console.log("SOMETHING IS HAPPENING");
+      console.log("TITLE: "+response.data.title);
+      const loadedData=JSON.parse(response.data.data);
+      //console.log("LD: "+loadedData);
+      const title=response.data.title;
+      
+      const averageAmplitude=response.data.average_amplitude;
+      const averagePitch=response.data.average_pitch;
+      const averageSpeed=response.data.average_speed;
+      const phraseStart=response.data.phrase_start;
+      const phraseEnd=response.data.phrase_end;
+      const matches=response.data.phrase_matches;
+
+      console.log("ps: "+phraseStart);
+      console.log("pe: "+phraseEnd);
+      let audio = {
+        time: [],
+        start: [],
+        end: [],
+        word: [], 
+        amp: [],
+        pitch: []
+      };
+
+      
+      console.log("Check 0");
+      console.log(loadedData);
+      console.log(typeof loadedData);
+      loadedData.data.forEach((e) => {
+        audio.time.push(e[1])
+        audio.start.push(e[1])
+        audio.end.push(e[2])
+        audio.word.push(e[0])
+        audio.amp.push(e[9]) //8
+        audio.pitch.push(e[10]);//11
+      });
+      
+
+      console.log("Check 1");
+      if(isOne){
+        setAverageAmplitude1(averageAmplitude);
+        setAveragePitch1(averagePitch);
+        setAverageSpeed1(averageSpeed);
+        setPhraseStart1(phraseStart);
+        setPhraseEnd1(phraseEnd);
+        
+        console.log("PMO: "+matches);
+        setPhraseMatches1(matches);
+      }
+      else{
+        setAverageAmplitude2(averageAmplitude);
+        setAveragePitch2(averagePitch);
+        setAverageSpeed2(averageSpeed);
+        setPhraseStart2(phraseStart);
+        setPhraseEnd2(phraseEnd);
+        
+        console.log("PMO: "+matches);
+        
+        setPhraseMatches2(matches);
+        /*
+        let temp=[matches.length];
+        for(let i=0;i<matches.length;i++){
+          temp[matches[i]]=i;
+        }*/
+      }
+      
+      console.log("Check 2");
+      audio.amp = movingAverage(audio.amp, 10);
+      audio.pitch = movingAverage(audio.pitch, 10);
+      
+      console.log("Check 3");
+      callback(audio)
+      console.log("AD: "+audio);
+      callback2(title)
+      callback3(false)
+      try {
+        
+        const matchFormData = new FormData();
+        matchFormData.append("isOne",((!isOne)?"1":"0"));
+        const response = await axios.post(localDevURL + "get_DTW_matches", {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+        });
+        
+        console.log("SOMETHING IS HAPPENING");
+        //const loadedData=JSON.parse(response.data.data);
+        const matches=response.data.phrase_matches;
+        console.log("MATCHES: "+matches);
+        if(!isOne){
+          setPhraseMatches1(matches);
+        }
+        else{
+          setPhraseMatches2(matches);
+        }
+      }
+      catch (error) {
+        console.error('Error:', error);
+      }
+      //#region Old Code
+/*      }).then((response) => {
         let loadedData = response.data.data
         let audio = {
           time: [],
@@ -181,7 +323,8 @@ function Homepage() {
       callback2(response.statusText);
       callback3(false);
       });
-
+*/
+//#endregion
       //if (!response.ok) throw new Error('Something went wrong');
       
     } catch (error) {
@@ -206,48 +349,78 @@ function Homepage() {
     document.querySelector("#timeRange").innerHTML = "Each line represents " + event.target.value + " seconds of speaking"
     // You might want to update the data or do something else when the toggle is hit
   };
-  const sendAudioToTranscribe= async (audioBlob, filename, callback, callback2, callback3) => {
+  const sendAudioToTranscribe= async (audioBlob, filename, callback, callback2, callback3,isOne) => {
     callback3(true);
     const formData = new FormData();
     formData.append("file", audioBlob, filename);
+    formData.append("isOne",isOne?"1":"0");
   
     try {
         const response = await axios.post(localDevURL + "rec-transcribe", formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
-        }).then((response) => {
-          let loadedData = response.data.data
-          let audio = {
-            time: [],
-            start: [],
-            end: [],
-            word: [],
-            amp: [],
-            pitch: []
-          };
-  
-          loadedData.forEach((e) => {
-            audio.time.push(e[1])
-            audio.start.push(e[1])
-            audio.end.push(e[2])
-            audio.word.push(e[0])
-            audio.amp.push(e[9]) //8
-            audio.pitch.push(e[10]);//11
+        });
+        console.log("RECEIVED DATA!!");
+        const loadedData=JSON.parse(response.data.data);
+        console.log(loadedData);
+        const title=response.data.title;
+        const averageAmplitude=response.data.average_amplitude;
+        const averagePitch=response.data.average_pitch;
+        const averageSpeed=response.data.average_speed;
+        const phraseStart=response.data.phrase_start;
+        const phraseEnd=response.data.phrase_end;
+        const matches=response.data.phrase_matches;
+
+        console.log("ps: "+phraseStart);
+        console.log("pe: "+phraseEnd);
+        let audio = {
+          time: [],
+          start: [],
+          end: [],
+          word: [],
+          amp: [],
+          pitch: []
+        };
+
+        loadedData.data.forEach((e) => {
+          audio.time.push(e[1])
+          audio.start.push(e[1])
+          audio.end.push(e[2])
+          audio.word.push(e[0])
+          audio.amp.push(e[9]) //8
+          audio.pitch.push(e[10]);//11
         });
         
   
-        
+
+        if(isOne){
+          setAverageAmplitude1(roundToThreeSignificantDigits(averageAmplitude));
+          setAveragePitch1(roundToThreeSignificantDigits(averagePitch));
+          setAverageSpeed1(roundToThreeSignificantDigits(averageSpeed));
+          setPhraseStart1(phraseStart);
+          setPhraseEnd1(phraseEnd);
+          setPhraseMatches1(matches);
+
+        }
+        else{
+          setAverageAmplitude2(roundToThreeSignificantDigits(averageAmplitude));
+          setAveragePitch2(roundToThreeSignificantDigits(averagePitch));
+          setAverageSpeed2(roundToThreeSignificantDigits(averageSpeed));
+          setPhraseStart2(phraseStart);
+          setPhraseEnd2(phraseEnd);
+          /*let temp=[matches.length];
+          for(let i=0;i<matches.length;i++){
+            temp[matches[i]]=i;
+          }*/
+          
+          setPhraseMatches2(matches);
+        }
         audio.amp = movingAverage(audio.amp, 10);
         audio.pitch = movingAverage(audio.pitch, 10);
         callback(audio)
-        callback2(response.statusText)
+        callback2(title)
         callback3(false)
-
-        });
-  
-        
-  
     } catch (error) {
         console.error('Error:', error);
         callback3(false);
@@ -255,15 +428,94 @@ function Homepage() {
     
   };
 
-  const handleSend = async (filename, url, callback, callback2, callback3) => {
+  const handleSend = async (filename, url, callback, callback2, callback3, isOne) => {
     callback3(true)
-  
     try {
         const response = await axios.post(localDevURL + "transcribe", {
           filename: filename,
-          url: url
+          url: url,
+          isOne: isOne
+        });
+        
+        console.log("SOMETHING IS HAPPENING");
+        const loadedData=JSON.parse(response.data.data);
+        const title=response.data.title;
+        const averageAmplitude=response.data.average_amplitude;
+        const averagePitch=response.data.average_pitch;
+        const averageSpeed=response.data.average_speed;
+        const phraseStart=response.data.phrase_start;
+        const phraseEnd=response.data.phrase_end;
+        const matches=response.data.phrase_matches;
 
-        }).then((response) => {
+        console.log("ps: "+phraseStart);
+        console.log("pe: "+phraseEnd);
+        let audio = {
+          time: [],
+          start: [],
+          end: [],
+          word: [],
+          amp: [],
+          pitch: []
+        };
+
+        loadedData.data.forEach((e) => {
+          audio.time.push(e[1])
+          audio.start.push(e[1])
+          audio.end.push(e[2])
+          audio.word.push(e[0])
+          audio.amp.push(e[9]) //8
+          audio.pitch.push(e[10]);//11
+          
+        });
+        
+  
+
+        if(isOne){
+          setAverageAmplitude1(roundToThreeSignificantDigits(averageAmplitude));
+          setAveragePitch1(roundToThreeSignificantDigits(averagePitch));
+          setAverageSpeed1(roundToThreeSignificantDigits(averageSpeed));
+          setPhraseStart1(phraseStart);
+          setPhraseEnd1(phraseEnd);
+          setPhraseMatches1(matches);
+
+        }
+        else{
+          setAverageAmplitude2(roundToThreeSignificantDigits(averageAmplitude));
+          setAveragePitch2(roundToThreeSignificantDigits(averagePitch));
+          setAverageSpeed2(roundToThreeSignificantDigits(averageSpeed));
+          setPhraseStart2(phraseStart);
+          setPhraseEnd2(phraseEnd);
+          /*let temp=[matches.length];
+          for(let i=0;i<matches.length;i++){
+            temp[matches[i]]=i;
+          }*/
+          setPhraseMatches2(matches);
+        }
+        audio.amp = movingAverage(audio.amp, 10);
+        audio.pitch = movingAverage(audio.pitch, 10);
+        callback(audio)
+        callback2(title)
+        callback3(false)
+
+        try {
+          const response = await axios.post(localDevURL + "get_DTW_matches", {
+            isOne: !isOne
+          });
+          
+          console.log("SOMETHING IS HAPPENING");
+          const loadedData=JSON.parse(response.data.data);
+          const matches=response.data.phrase_matches;
+          if(!isOne){
+            setPhraseMatches1(matches);
+          }
+          else{
+            setPhraseMatches2(matches);
+          }
+        }
+        catch (error) {
+          console.error('Error:', error);
+        }
+        /*}).then((response) => {
           let loadedData = response.data.data
           let audio = {
             time: [],
@@ -292,7 +544,7 @@ function Homepage() {
         callback3(false)
 
 
-        });
+        });*/
   
         
   
@@ -311,7 +563,7 @@ function Homepage() {
   }, []);
 
     useEffect(() => {
-      if(blob){sendAudioToTranscribe(blob,'rec1.wav',setData,setVideoTitle1,setLoading1)
+      if(blob){sendAudioToTranscribe(blob,'rec1.wav',setData,setVideoTitle1,setLoading1,true)
       const newAudioUrl = URL.createObjectURL(blob);
       setAudioUrl(newAudioUrl);
       setSpeaker1url("Enter YouTube link")
@@ -324,7 +576,7 @@ function Homepage() {
     }, [blob]);
 
     useEffect(() => {
-      if(blob2){sendAudioToTranscribe(blob2,'rec2.wav',setData2,setVideoTitle2,setLoading2)
+      if(blob2){sendAudioToTranscribe(blob2,'rec2.wav',setData2,setVideoTitle2,setLoading2,false)
       const newAudioUrl2 = URL.createObjectURL(blob2);
       setAudioUrl2(newAudioUrl2);
       setSpeaker2url("Enter YouTube link")
@@ -426,10 +678,10 @@ function Homepage() {
             tabIndex={-1}
             startIcon={<CloudUploadIcon />}
             >
-            Upload file
+            Upload file   
               <VisuallyHiddenInput type="file" 
-              accept=".wav,video/mp4"
-              onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1 )}
+              accept=".wav,video/mp4/mp3"
+              onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1,true)}
               />
           </Button>     
           </div>
@@ -455,7 +707,7 @@ function Homepage() {
         
         <IconButton aria-label="send">
 
-        {(loading1)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1)}/>}
+        {(loading1)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
 
         </IconButton>
         
@@ -479,7 +731,7 @@ function Homepage() {
             Upload file
               <VisuallyHiddenInput type="file" 
               accept=".wav,video/mp4"
-              onChange={(event) => handleUpload(event,setData2,setVideoTitle2,setLoading2 )}
+              onChange={(event) => handleUpload(event,setData2,setVideoTitle2,setLoading2,false )}
               />
           </Button>   
           
@@ -500,15 +752,15 @@ function Homepage() {
         </Tooltip> 
         <IconButton aria-label="send">
 
-        {(loading1)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2)}/>}
+        {(loading2)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2,false)}/>}
 
         </IconButton>
         </div>
           <div className="col-lg-5 speaker1">
-            {(speaker1)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker1} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker1"} pauseSlider={pauseSlider} speedSlider={speedvalue} videoID={speaker1url} timeSlider={timeSlider} videoTime={videoTime}/>:null}
+            {(speaker1)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker1} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker1"} pauseSlider={pauseSlider} speedSlider={speedvalue} videoID={speaker1url} timeSlider={timeSlider} videoTime={videoTime} averageAmplitude={averageAmplitude1} averageSpeed={averageSpeed1} averagePitch={averagePitch1} phraseStart={phraseStart1} phraseEnd={phraseEnd1} isOne={true} dtwCallback={highlightDTWMatch} dtwData={dtwData1}/>:null}
           </div>
           <div className="col-lg-5 speaker2">
-          {(speaker2)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker2} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker2"} pauseSlider={pauseSlider} speedSlider={speedvalue} timeSlider={timeSlider} videoID={speaker2url}/>:null}
+          {(speaker2)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker2} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker2"} pauseSlider={pauseSlider} speedSlider={speedvalue} timeSlider={timeSlider} videoID={speaker2url} averageAmplitude={averageAmplitude2} averageSpeed={averageSpeed2} averagePitch={averagePitch2} phraseStart={phraseStart2} phraseEnd={phraseEnd2} isOne={false} dtwCallback={highlightDTWMatch} dtwData={dtwData2}/>:null}
           </div>
         </div>
       </div>
@@ -582,5 +834,17 @@ function movingAverage(data, windowSize) {
   }
   return result;
 }
+function roundToThreeSignificantDigits(num) {
+  if (num === 0) return 0;
+  
+  const absNum = Math.abs(num);
+  const sign = Math.sign(num);
+  const log10 = Math.floor(Math.log10(absNum));
+  const scale = Math.pow(10, log10 - 2); // Scale to bring three significant digits to the integer part
+  
+  const rounded = Math.round(absNum / scale) * scale;
+  
+  return sign * rounded;
+}   
 
 export default Homepage;
