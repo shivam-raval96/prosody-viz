@@ -1,0 +1,1052 @@
+{
+  "text": " I met a traveller from an antique land, who said, Two vast and trunkless legs of stone stand in the desert. Near them on the sand half sunk a shattered visage lies, Whose frown and wrinkled lip and sneer of cold command Tell that its sculptor well those passions read which yet survive, Stamped on these lifeless things, the hand that mocked them, And the heart that fed. And on the pedestal these words appear, My name is Ozymandas, King of Kings, Look on my works, you mighty and despair. Nothing beside remains. Round the decay of that colossal wreck, boundless and bare, The lone and level sands stretch far away.",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 3.06,
+      "end": 18.28,
+      "text": " I met a traveller from an antique land, who said,",
+      "tokens": [
+        50364,
+        286,
+        1131,
+        257,
+        13938,
+        4658,
+        490,
+        364,
+        41220,
+        2117,
+        11,
+        567,
+        848,
+        11,
+        51305
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.2562858094560339,
+      "compression_ratio": 1.3225806451612903,
+      "no_speech_prob": 0.30710113048553467,
+      "confidence": 0.784,
+      "words": [
+        {
+          "text": "I",
+          "start": 3.06,
+          "end": 14.66,
+          "confidence": 0.503
+        },
+        {
+          "text": "met",
+          "start": 14.66,
+          "end": 15.24,
+          "confidence": 0.426
+        },
+        {
+          "text": "a",
+          "start": 15.24,
+          "end": 15.5,
+          "confidence": 0.968
+        },
+        {
+          "text": "traveller",
+          "start": 15.5,
+          "end": 15.92,
+          "confidence": 0.781
+        },
+        {
+          "text": "from",
+          "start": 15.92,
+          "end": 16.16,
+          "confidence": 0.96
+        },
+        {
+          "text": "an",
+          "start": 16.16,
+          "end": 16.44,
+          "confidence": 0.988
+        },
+        {
+          "text": "antique",
+          "start": 16.44,
+          "end": 16.72,
+          "confidence": 0.929
+        },
+        {
+          "text": "land,",
+          "start": 16.72,
+          "end": 17.22,
+          "confidence": 0.995
+        },
+        {
+          "text": "who",
+          "start": 17.74,
+          "end": 17.92,
+          "confidence": 0.629
+        },
+        {
+          "text": "said,",
+          "start": 17.92,
+          "end": 18.28,
+          "confidence": 0.986
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "seek": 0,
+      "start": 19.16,
+      "end": 22.7,
+      "text": " Two vast and trunkless legs of stone stand in the desert.",
+      "tokens": [
+        51305,
+        4453,
+        8369,
+        293,
+        19849,
+        1832,
+        5668,
+        295,
+        7581,
+        1463,
+        294,
+        264,
+        11029,
+        13,
+        51556
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.2562858094560339,
+      "compression_ratio": 1.3225806451612903,
+      "no_speech_prob": 0.30710113048553467,
+      "confidence": 0.889,
+      "words": [
+        {
+          "text": "Two",
+          "start": 19.16,
+          "end": 19.42,
+          "confidence": 0.464
+        },
+        {
+          "text": "vast",
+          "start": 19.42,
+          "end": 19.88,
+          "confidence": 0.996
+        },
+        {
+          "text": "and",
+          "start": 19.88,
+          "end": 20.1,
+          "confidence": 0.976
+        },
+        {
+          "text": "trunkless",
+          "start": 20.1,
+          "end": 20.5,
+          "confidence": 0.949
+        },
+        {
+          "text": "legs",
+          "start": 20.5,
+          "end": 20.84,
+          "confidence": 0.984
+        },
+        {
+          "text": "of",
+          "start": 20.84,
+          "end": 21.08,
+          "confidence": 0.997
+        },
+        {
+          "text": "stone",
+          "start": 21.08,
+          "end": 21.46,
+          "confidence": 0.83
+        },
+        {
+          "text": "stand",
+          "start": 21.46,
+          "end": 21.88,
+          "confidence": 0.781
+        },
+        {
+          "text": "in",
+          "start": 21.88,
+          "end": 22.1,
+          "confidence": 0.964
+        },
+        {
+          "text": "the",
+          "start": 22.1,
+          "end": 22.3,
+          "confidence": 0.99
+        },
+        {
+          "text": "desert.",
+          "start": 22.3,
+          "end": 22.7,
+          "confidence": 0.982
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "seek": 0,
+      "start": 23.68,
+      "end": 27.86,
+      "text": " Near them on the sand half sunk a shattered visage lies,",
+      "tokens": [
+        51556,
+        22200,
+        552,
+        322,
+        264,
+        4932,
+        1922,
+        40564,
+        257,
+        35209,
+        1452,
+        609,
+        9134,
+        11,
+        51796
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.2562858094560339,
+      "compression_ratio": 1.3225806451612903,
+      "no_speech_prob": 0.30710113048553467,
+      "confidence": 0.885,
+      "words": [
+        {
+          "text": "Near",
+          "start": 23.68,
+          "end": 23.96,
+          "confidence": 0.916
+        },
+        {
+          "text": "them",
+          "start": 23.96,
+          "end": 24.26,
+          "confidence": 0.998
+        },
+        {
+          "text": "on",
+          "start": 24.26,
+          "end": 24.46,
+          "confidence": 0.535
+        },
+        {
+          "text": "the",
+          "start": 24.46,
+          "end": 24.72,
+          "confidence": 0.994
+        },
+        {
+          "text": "sand",
+          "start": 24.72,
+          "end": 25.02,
+          "confidence": 0.992
+        },
+        {
+          "text": "half",
+          "start": 25.02,
+          "end": 25.34,
+          "confidence": 0.87
+        },
+        {
+          "text": "sunk",
+          "start": 25.34,
+          "end": 25.74,
+          "confidence": 0.881
+        },
+        {
+          "text": "a",
+          "start": 25.74,
+          "end": 26.52,
+          "confidence": 0.656
+        },
+        {
+          "text": "shattered",
+          "start": 26.52,
+          "end": 27.0,
+          "confidence": 0.991
+        },
+        {
+          "text": "visage",
+          "start": 27.0,
+          "end": 27.44,
+          "confidence": 0.981
+        },
+        {
+          "text": "lies,",
+          "start": 27.44,
+          "end": 27.86,
+          "confidence": 0.993
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "seek": 2864,
+      "start": 28.64,
+      "end": 32.2,
+      "text": " Whose frown and wrinkled lip and sneer of cold command",
+      "tokens": [
+        50364,
+        28463,
+        431,
+        648,
+        293,
+        928,
+        475,
+        1493,
+        8280,
+        293,
+        9244,
+        260,
+        295,
+        3554,
+        5622,
+        50564
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.952,
+      "words": [
+        {
+          "text": "Whose",
+          "start": 28.64,
+          "end": 28.88,
+          "confidence": 0.849
+        },
+        {
+          "text": "frown",
+          "start": 28.88,
+          "end": 29.3,
+          "confidence": 0.998
+        },
+        {
+          "text": "and",
+          "start": 29.3,
+          "end": 29.5,
+          "confidence": 0.776
+        },
+        {
+          "text": "wrinkled",
+          "start": 29.5,
+          "end": 29.92,
+          "confidence": 0.993
+        },
+        {
+          "text": "lip",
+          "start": 29.92,
+          "end": 30.2,
+          "confidence": 0.992
+        },
+        {
+          "text": "and",
+          "start": 30.2,
+          "end": 30.58,
+          "confidence": 0.813
+        },
+        {
+          "text": "sneer",
+          "start": 30.58,
+          "end": 31.06,
+          "confidence": 0.99
+        },
+        {
+          "text": "of",
+          "start": 31.06,
+          "end": 31.24,
+          "confidence": 0.995
+        },
+        {
+          "text": "cold",
+          "start": 31.24,
+          "end": 31.58,
+          "confidence": 0.994
+        },
+        {
+          "text": "command",
+          "start": 31.58,
+          "end": 32.2,
+          "confidence": 0.994
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "seek": 2864,
+      "start": 32.72,
+      "end": 37.28,
+      "text": " Tell that its sculptor well those passions read which yet survive,",
+      "tokens": [
+        50564,
+        5115,
+        300,
+        1080,
+        12613,
+        284,
+        731,
+        729,
+        30640,
+        1401,
+        597,
+        1939,
+        7867,
+        11,
+        50826
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.936,
+      "words": [
+        {
+          "text": "Tell",
+          "start": 32.72,
+          "end": 33.08,
+          "confidence": 0.977
+        },
+        {
+          "text": "that",
+          "start": 33.08,
+          "end": 33.36,
+          "confidence": 0.929
+        },
+        {
+          "text": "its",
+          "start": 33.36,
+          "end": 33.62,
+          "confidence": 0.971
+        },
+        {
+          "text": "sculptor",
+          "start": 33.62,
+          "end": 34.36,
+          "confidence": 0.972
+        },
+        {
+          "text": "well",
+          "start": 34.36,
+          "end": 34.74,
+          "confidence": 0.954
+        },
+        {
+          "text": "those",
+          "start": 34.74,
+          "end": 35.12,
+          "confidence": 0.928
+        },
+        {
+          "text": "passions",
+          "start": 35.12,
+          "end": 35.64,
+          "confidence": 0.996
+        },
+        {
+          "text": "read",
+          "start": 35.64,
+          "end": 36.02,
+          "confidence": 0.917
+        },
+        {
+          "text": "which",
+          "start": 36.02,
+          "end": 36.34,
+          "confidence": 0.832
+        },
+        {
+          "text": "yet",
+          "start": 36.34,
+          "end": 36.62,
+          "confidence": 0.992
+        },
+        {
+          "text": "survive,",
+          "start": 36.62,
+          "end": 37.28,
+          "confidence": 0.816
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "seek": 2864,
+      "start": 37.86,
+      "end": 42.38,
+      "text": " Stamped on these lifeless things, the hand that mocked them,",
+      "tokens": [
+        50826,
+        48011,
+        292,
+        322,
+        613,
+        4545,
+        4272,
+        721,
+        11,
+        264,
+        1011,
+        300,
+        17362,
+        292,
+        552,
+        11,
+        51076
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.881,
+      "words": [
+        {
+          "text": "Stamped",
+          "start": 37.86,
+          "end": 38.44,
+          "confidence": 0.627
+        },
+        {
+          "text": "on",
+          "start": 38.44,
+          "end": 38.58,
+          "confidence": 0.997
+        },
+        {
+          "text": "these",
+          "start": 38.58,
+          "end": 38.8,
+          "confidence": 0.992
+        },
+        {
+          "text": "lifeless",
+          "start": 38.8,
+          "end": 39.3,
+          "confidence": 0.993
+        },
+        {
+          "text": "things,",
+          "start": 39.3,
+          "end": 39.98,
+          "confidence": 0.995
+        },
+        {
+          "text": "the",
+          "start": 40.78,
+          "end": 41.08,
+          "confidence": 0.583
+        },
+        {
+          "text": "hand",
+          "start": 41.08,
+          "end": 41.46,
+          "confidence": 0.987
+        },
+        {
+          "text": "that",
+          "start": 41.46,
+          "end": 41.74,
+          "confidence": 0.997
+        },
+        {
+          "text": "mocked",
+          "start": 41.74,
+          "end": 42.18,
+          "confidence": 0.936
+        },
+        {
+          "text": "them,",
+          "start": 42.18,
+          "end": 42.38,
+          "confidence": 0.997
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "seek": 2864,
+      "start": 42.48,
+      "end": 44.08,
+      "text": " And the heart that fed.",
+      "tokens": [
+        51076,
+        400,
+        264,
+        1917,
+        300,
+        4636,
+        13,
+        51212
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.985,
+      "words": [
+        {
+          "text": "And",
+          "start": 42.48,
+          "end": 43.0,
+          "confidence": 0.952
+        },
+        {
+          "text": "the",
+          "start": 43.0,
+          "end": 43.12,
+          "confidence": 0.99
+        },
+        {
+          "text": "heart",
+          "start": 43.12,
+          "end": 43.44,
+          "confidence": 0.993
+        },
+        {
+          "text": "that",
+          "start": 43.44,
+          "end": 43.78,
+          "confidence": 0.997
+        },
+        {
+          "text": "fed.",
+          "start": 43.78,
+          "end": 44.08,
+          "confidence": 0.995
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "seek": 2864,
+      "start": 45.16,
+      "end": 48.42,
+      "text": " And on the pedestal these words appear,",
+      "tokens": [
+        51212,
+        400,
+        322,
+        264,
+        20497,
+        304,
+        613,
+        2283,
+        4204,
+        11,
+        51446
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.981,
+      "words": [
+        {
+          "text": "And",
+          "start": 45.16,
+          "end": 45.72,
+          "confidence": 0.924
+        },
+        {
+          "text": "on",
+          "start": 45.72,
+          "end": 45.94,
+          "confidence": 0.995
+        },
+        {
+          "text": "the",
+          "start": 45.94,
+          "end": 46.18,
+          "confidence": 0.993
+        },
+        {
+          "text": "pedestal",
+          "start": 46.18,
+          "end": 46.98,
+          "confidence": 0.997
+        },
+        {
+          "text": "these",
+          "start": 46.98,
+          "end": 47.36,
+          "confidence": 0.945
+        },
+        {
+          "text": "words",
+          "start": 47.36,
+          "end": 47.78,
+          "confidence": 0.998
+        },
+        {
+          "text": "appear,",
+          "start": 47.78,
+          "end": 48.42,
+          "confidence": 0.998
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "seek": 2864,
+      "start": 50.2,
+      "end": 54.66,
+      "text": " My name is Ozymandas, King of Kings,",
+      "tokens": [
+        51446,
+        1222,
+        1315,
+        307,
+        422,
+        1229,
+        22396,
+        296,
+        11,
+        3819,
+        295,
+        21855,
+        11,
+        51700
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.278515114841691,
+      "compression_ratio": 1.4973544973544974,
+      "no_speech_prob": 0.10888910293579102,
+      "confidence": 0.791,
+      "words": [
+        {
+          "text": "My",
+          "start": 50.2,
+          "end": 50.68,
+          "confidence": 0.641
+        },
+        {
+          "text": "name",
+          "start": 50.68,
+          "end": 51.24,
+          "confidence": 0.99
+        },
+        {
+          "text": "is",
+          "start": 51.24,
+          "end": 51.72,
+          "confidence": 0.99
+        },
+        {
+          "text": "Ozymandas,",
+          "start": 51.72,
+          "end": 52.88,
+          "confidence": 0.793
+        },
+        {
+          "text": "King",
+          "start": 53.28,
+          "end": 53.62,
+          "confidence": 0.608
+        },
+        {
+          "text": "of",
+          "start": 53.62,
+          "end": 53.96,
+          "confidence": 0.998
+        },
+        {
+          "text": "Kings,",
+          "start": 53.96,
+          "end": 54.66,
+          "confidence": 0.633
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "seek": 5536,
+      "start": 55.36,
+      "end": 58.88,
+      "text": " Look on my works, you mighty and despair.",
+      "tokens": [
+        50364,
+        2053,
+        322,
+        452,
+        1985,
+        11,
+        291,
+        21556,
+        293,
+        25763,
+        13,
+        50666
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.335458552583735,
+      "compression_ratio": 1.282442748091603,
+      "no_speech_prob": 0.42673370242118835,
+      "confidence": 0.923,
+      "words": [
+        {
+          "text": "Look",
+          "start": 55.36,
+          "end": 55.6,
+          "confidence": 0.952
+        },
+        {
+          "text": "on",
+          "start": 55.6,
+          "end": 55.92,
+          "confidence": 0.987
+        },
+        {
+          "text": "my",
+          "start": 55.92,
+          "end": 56.34,
+          "confidence": 0.992
+        },
+        {
+          "text": "works,",
+          "start": 56.34,
+          "end": 56.74,
+          "confidence": 0.857
+        },
+        {
+          "text": "you",
+          "start": 57.02,
+          "end": 57.24,
+          "confidence": 0.773
+        },
+        {
+          "text": "mighty",
+          "start": 57.24,
+          "end": 57.6,
+          "confidence": 0.945
+        },
+        {
+          "text": "and",
+          "start": 57.6,
+          "end": 58.14,
+          "confidence": 0.928
+        },
+        {
+          "text": "despair.",
+          "start": 58.14,
+          "end": 58.88,
+          "confidence": 0.975
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "seek": 5536,
+      "start": 61.44,
+      "end": 63.52,
+      "text": " Nothing beside remains.",
+      "tokens": [
+        50666,
+        6693,
+        15726,
+        7023,
+        13,
+        50828
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.335458552583735,
+      "compression_ratio": 1.282442748091603,
+      "no_speech_prob": 0.42673370242118835,
+      "confidence": 0.972,
+      "words": [
+        {
+          "text": "Nothing",
+          "start": 61.44,
+          "end": 61.86,
+          "confidence": 0.969
+        },
+        {
+          "text": "beside",
+          "start": 61.86,
+          "end": 62.52,
+          "confidence": 0.954
+        },
+        {
+          "text": "remains.",
+          "start": 62.52,
+          "end": 63.52,
+          "confidence": 0.994
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "seek": 5536,
+      "start": 64.68,
+      "end": 69.08,
+      "text": " Round the decay of that colossal wreck, boundless and bare,",
+      "tokens": [
+        50828,
+        18525,
+        264,
+        21039,
+        295,
+        300,
+        48683,
+        304,
+        21478,
+        11,
+        5472,
+        1832,
+        293,
+        6949,
+        11,
+        51096
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.335458552583735,
+      "compression_ratio": 1.282442748091603,
+      "no_speech_prob": 0.42673370242118835,
+      "confidence": 0.982,
+      "words": [
+        {
+          "text": "Round",
+          "start": 64.68,
+          "end": 65.08,
+          "confidence": 0.985
+        },
+        {
+          "text": "the",
+          "start": 65.08,
+          "end": 65.36,
+          "confidence": 0.998
+        },
+        {
+          "text": "decay",
+          "start": 65.36,
+          "end": 65.68,
+          "confidence": 0.99
+        },
+        {
+          "text": "of",
+          "start": 65.68,
+          "end": 65.96,
+          "confidence": 0.991
+        },
+        {
+          "text": "that",
+          "start": 65.96,
+          "end": 66.18,
+          "confidence": 0.989
+        },
+        {
+          "text": "colossal",
+          "start": 66.18,
+          "end": 66.78,
+          "confidence": 0.998
+        },
+        {
+          "text": "wreck,",
+          "start": 66.78,
+          "end": 67.28,
+          "confidence": 0.988
+        },
+        {
+          "text": "boundless",
+          "start": 67.74,
+          "end": 68.3,
+          "confidence": 0.936
+        },
+        {
+          "text": "and",
+          "start": 68.3,
+          "end": 68.66,
+          "confidence": 0.98
+        },
+        {
+          "text": "bare,",
+          "start": 68.66,
+          "end": 69.08,
+          "confidence": 0.999
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "seek": 5536,
+      "start": 69.96,
+      "end": 74.16,
+      "text": " The lone and level sands stretch far away.",
+      "tokens": [
+        51096,
+        440,
+        35314,
+        293,
+        1496,
+        262,
+        2967,
+        5985,
+        1400,
+        1314,
+        13,
+        51310
+      ],
+      "temperature": 0.0,
+      "avg_logprob": -0.335458552583735,
+      "compression_ratio": 1.282442748091603,
+      "no_speech_prob": 0.42673370242118835,
+      "confidence": 0.947,
+      "words": [
+        {
+          "text": "The",
+          "start": 69.96,
+          "end": 70.24,
+          "confidence": 0.747
+        },
+        {
+          "text": "lone",
+          "start": 70.24,
+          "end": 70.66,
+          "confidence": 0.987
+        },
+        {
+          "text": "and",
+          "start": 70.66,
+          "end": 70.96,
+          "confidence": 0.995
+        },
+        {
+          "text": "level",
+          "start": 70.96,
+          "end": 71.26,
+          "confidence": 0.897
+        },
+        {
+          "text": "sands",
+          "start": 71.26,
+          "end": 71.98,
+          "confidence": 0.995
+        },
+        {
+          "text": "stretch",
+          "start": 71.98,
+          "end": 72.78,
+          "confidence": 0.982
+        },
+        {
+          "text": "far",
+          "start": 72.78,
+          "end": 73.68,
+          "confidence": 0.964
+        },
+        {
+          "text": "away.",
+          "start": 73.68,
+          "end": 74.16,
+          "confidence": 0.994
+        }
+      ]
+    }
+  ],
+  "language": "en"
+}

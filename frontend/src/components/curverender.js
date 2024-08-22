@@ -92,7 +92,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     for (let i = 0; i < audio.time.length-1; i++) {
       if (caedenceStatus){
         if (audio.start[i+1] - audio.end[i] > pauseSlider) {
-          console.log(audio.start[i+1] - audio.end[i])
+          //console.log(audio.start[i+1] - audio.end[i])
           endings.push(i);
         }
       }else{
@@ -103,7 +103,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       }
     }
     endings.push(audio.time.length-1)
-    console.log("Endings Length: "+endings.length);
+    console.log("Endings Length: "+endings.length+" \n endings: "+endings.toString());
     let offset = 0;
     let endIndex = endings[0];
     let startIndex = 0;
@@ -114,6 +114,9 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       var new_g = g.append('g');
       new_g.attr("transform", `translate(0,${separation*(j+1)})`);
       new_g.attr("id", name + "g" + j);
+      /*endIndex=endings[j];
+      lastEnd=endings[j];
+      startIndex=(j==0)?0:endings[j-1];*/
       // Draw area paths
       for (let i = (j==0)? 0 :endings[j-1]; i < endings[j]; i++) {
         let data;
@@ -125,17 +128,26 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
           data = [[audio.start[i], audio.amp[i], audio.pitch[i]], [audio.start[i + 1], audio.amp[i+1], audio.pitch[i+1]]];
         }
 
-          if (audio.end[i] - lastEnd > timeSeparation) {
+
+          if (!caedenceStatus&&audio.end[i] - lastEnd > timeSeparation) {
+            console.log("SEGMENTING");
             offset++;
             lastEnd = audio.end[i];
             endIndex = endings[offset];
             startIndex = endings[offset-1];
           }
+          else if(caedenceStatus){
+            endIndex=endings[j];
+            //lastEnd=endings[j]; 
+            startIndex=(j==0)?0:endings[j-1];
+          }
 
+          var XSCALEMULTI=50.0;
           // Set up scales
+          
           var xScaleNew = d3.scaleLinear()
           .domain(d3.extent(audio.end.slice(startIndex, endIndex)))
-          .range([margin.left, 1800])
+          .range([margin.left, caedenceStatus?((audio.end[endIndex]-audio.start[startIndex])*XSCALEMULTI):1800])
           .clamp(true);
           
           if (tiledStatus){
@@ -521,9 +533,9 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
         Pauses per minute: {pausespm}<br/>
         Words per minute: {wordspm}<br/>
         Emphasized Words per min: {emphwords}<br/>
-        Average Speaking Speed: {averageSpeed}<br/>
-        Average Amplitude: {averageAmplitude}<br/>
-        Average pitch: {averagePitch} Hz<br/>
+        Average Speaking Speed: {averageSpeed.toFixed(3)}<br/>
+        Average Amplitude: {averageAmplitude.toFixed(3)}<br/>
+        Average pitch: {averagePitch.toFixed(3)} Hz<br/>
         Dynamic Pitch Range: {3*pitchrange} Hz
       </div>
     </div>
@@ -614,16 +626,39 @@ function drawBoxAroundWords(groupIndex, groupName, i, j, opacity) {
       if(!isSeparate1&&!isSeparate2) drawBoxHelper(pathElement1,pathElement2,groupId,opacity);
       else {
         console.log("Box not drawn");
-        return;
         console.log("Separate "+isSeparate1.toString()+isSeparate2.toString());
-        drawBoxHelper(pathElement1,d3.select(`#${groupName}g${groupIndex-1}`,isSeparate1?`#${groupName}g${groupIndex-1}`:groupId),opacity);
-        drawBoxHelper(d3.select(`#${groupName}g${groupIndex+1}`,pathElement2,isSeparate2?`#${groupName}g${groupIndex+1}`:groupId),opacity);
+        var pathEnd1=d3.select(`#${groupName}g${groupIndex-1}`).select('path');
+        var pathEnd2=d3.select(`#${groupName}g${groupIndex+1}`).select('path');
+
+        drawBoxHelper(pathElement1,
+          isSeparate1?pathEnd1:d3.select(groupId).select('path'),
+          (isSeparate1?`#${groupName}g${groupIndex-1}`:groupId),
+          opacity);
+        drawBoxHelper(isSeparate2?pathEnd2:d3.select(groupId).select('path'),
+          pathElement2,
+          (isSeparate2?`#${groupName}g${groupIndex+1}`:groupId),
+          opacity);
+
       }
   } else {
-      console.log("One or both path elements not found or attribute mismatch.");
+    console.log("Only One box drawn");
+    console.log("Separate "+isSeparate1.toString()+isSeparate2.toString());
+    if(!isSeparate1){
+      drawBoxHelper(pathElement1,
+        d3.select(groupId).select('path'),
+        groupId,
+        opacity);
+    }
+    if(!isSeparate2){
+      drawBoxHelper(d3.select(groupId).select('path'),
+        pathElement2,
+        groupId,
+        opacity);
+    }
   }
 }
 function drawBoxHelper(pathElement1, pathElement2, groupId,opacity){
+  if(pathElement1==null||pathElement2==null||pathElement1.empty()||pathElement2.empty())return;
   const bbox1 = pathElement1.node().getBBox();
   const bbox2 = pathElement2.node().getBBox();
 
@@ -633,13 +668,19 @@ function drawBoxHelper(pathElement1, pathElement2, groupId,opacity){
   const minY = Math.min(bbox1.y, bbox2.y);
   const maxY = Math.max(bbox1.y + bbox1.height, bbox2.y + bbox2.height);
 
-  const width = maxX - minX;
-  const height = maxY - minY;
+  var width = maxX - minX;
+  //TECHY SOLUTION USING THE LINE LENGTH IF maxX is ZERO TODO 
+  if(width<0){
+    width=1800-minX;
+  }
+  const height = Math.abs(maxY - minY);
 
   // Append a rectangle to highlight both words
   const group = d3.select(groupId);
+  if(group==null||group.empty())return;
   const colorInterpolate = d3.interpolateRgb("green", "red");
-
+  console.log(groupId+" -> " +d3.select(groupId).node());
+  console.log(maxX+" "+minX+" "+minY+" "+width+" "+height+" "+colorInterpolate(1-opacity));
 // Your existing code to append the rectangle
   group.append('rect')
     .attr('x', minX - 2)  // Slight padding
