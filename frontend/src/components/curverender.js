@@ -68,7 +68,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     var noZeroes = audio.pitch.filter(function(d) { return d !== 0; });
     let smallest = d3.min(noZeroes);
 
-    let domain = [75, 125, 280];
+    let domain = [75, 125, 300];
+    // let domain = d3.extent(audio.pitch);
     if (normalizeStatus) {
 
       domain = [smallest, d3.median(noZeroes), d3.max(audio.pitch)];
@@ -81,7 +82,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     }
 
     let pitchScale = d3.scaleLinear()
-    .domain(domain)
+    .domain([d3.min(audio.pitch), d3.max(audio.pitch)])
     .range([0, 0]);
 
    

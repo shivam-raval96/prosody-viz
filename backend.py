@@ -11,10 +11,15 @@ import heapq
 import json
 import math
 import ssl
+import os
+import logging
+import urllib
+
 #from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 #from ibm_watson import SpeechToTextV1
 
 from pydub import AudioSegment
+from yt_dlp import YoutubeDL
 import parselmouth
 import librosa
 from scipy.io import wavfile
@@ -133,21 +138,105 @@ def amplitude_envelope(signal, frame_size, hop_length):
 
 
 
+# def download_audio_youtube(url, name):
+#     yt = YouTube(url,use_oauth=False, allow_oauth_cache=True)
+#     video = yt.streams.filter(only_audio=True).first()
+#     out_file = video.download(output_path='./')
+#     title = yt.title
+
+#     audio = AudioSegment.from_file(out_file)
+#     new_file = name
+#     #audio = audio.set_channels(1)  # Set to mono
+#     #audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
+#     audio.export(new_file, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
+
+#     os.remove(out_file)
+
+#     return new_file, title
+
+
 def download_audio_youtube(url, name):
-    yt = YouTube(url,use_oauth=False, allow_oauth_cache=True)
-    video = yt.streams.filter(only_audio=True).first()
-    out_file = video.download(output_path='./')
-    title = yt.title
+    try:
+        logging.info(f"Attempting to download audio from: {url}")
+        yt = YouTube(url, use_oauth=False, allow_oauth_cache=True)
 
-    audio = AudioSegment.from_file(out_file)
-    new_file = name
-    #audio = audio.set_channels(1)  # Set to mono
-    #audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
-    audio.export(new_file, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
+        # Check for available audio streams
+        video = yt.streams.filter(only_audio=True).first()
+        if video is None:
+            logging.error("No audio streams available for this video.")
+            return None, None
 
-    os.remove(out_file)
+        # Download the audio file
+        out_file = video.download(output_path='./')
+        title = yt.title
 
-    return new_file, title
+        # Process the audio file
+        audio = AudioSegment.from_file(out_file)
+        new_file = name
+
+        # Uncomment the next lines if you need to modify channels/frame rate
+        # audio = audio.set_channels(1)  # Set to mono
+        # audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
+
+        # Export the audio as WAV format
+        audio.export(new_file, format="wav", codec="pcm_s16le")
+
+        # Clean up the original downloaded file
+        os.remove(out_file)
+
+        return new_file, title
+
+    except urllib.error.HTTPError as e:
+        logging.error(f"HTTP Error {e.code}: {e.reason} while accessing {url}")
+    except Exception as e:
+        logging.exception(f"An error occurred while downloading audio: {e}")
+
+    return None, None
+
+
+# def download_audio_youtube(url, name):
+#     """
+#     Downloads audio from a YouTube video and saves it as a .wav file.
+
+#     Parameters:
+#         url (str): The URL of the YouTube video.
+#         name (str): The name of the output .wav file.
+
+#     Returns:
+#         tuple: The path to the saved audio file and the video title.
+#     """
+#     try:
+#         logging.info(f"Attempting to download audio from: {url}")
+        
+#         # Set up yt-dlp options for audio-only download
+#         ydl_opts = {
+#             'format': 'bestaudio/best',
+#             'outtmpl': './%(title)s.%(ext)s',
+#             'postprocessors': [{
+#                 'key': 'FFmpegExtractAudio',
+#                 'preferredcodec': 'wav',
+#                 'preferredquality': '192',
+#             }]
+#         }
+
+#         # Download audio using yt-dlp
+#         with YoutubeDL(ydl_opts) as ydl:
+#             info_dict = ydl.extract_info(url, download=True)
+#             title = info_dict.get('title', None)
+#             downloaded_file = f"./{title}.wav"
+
+#         # Rename and process the file if necessary
+#         if os.path.exists(downloaded_file):
+#             os.rename(downloaded_file, name)
+
+#         return name, title
+
+#     except Exception as e:
+#         logging.exception(f"An error occurred while downloading audio: {e}")
+
+#     return None, None
+
+
 @app.route("/get_window", methods=["POST"])
 #takes in timestamp and returns the start and end of the clause
 def return_comparison_window():
@@ -356,9 +445,9 @@ def process_audio_data(filename,isDataOne):
     MIN_SENTENCE_CONFIDENCE_THRESHOLD=0.4 #For sentence confidence
     MIN_WORD_CONFIDENCE_THRESHOLD=0.3 #For word confidence 
     # Add explanation for what is confidence TODO
+
     
 
-    #TRANSCRIPTION PROCESS
     audio=whisper.load_audio(filename)
     results=whisper.transcribe(model, audio, language="en")
     
