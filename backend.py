@@ -14,6 +14,7 @@ import ssl
 import os
 import logging
 import urllib
+import pdb
 
 #from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 #from ibm_watson import SpeechToTextV1
@@ -155,48 +156,9 @@ def amplitude_envelope(signal, frame_size, hop_length):
 #     return new_file, title
 
 
-def download_audio_youtube(url, name):
-    try:
-        logging.info(f"Attempting to download audio from: {url}")
-        yt = YouTube(url, use_oauth=False, allow_oauth_cache=True)
-
-        # Check for available audio streams
-        video = yt.streams.filter(only_audio=True).first()
-        if video is None:
-            logging.error("No audio streams available for this video.")
-            return None, None
-
-        # Download the audio file
-        out_file = video.download(output_path='./')
-        title = yt.title
-
-        # Process the audio file
-        audio = AudioSegment.from_file(out_file)
-        new_file = name
-
-        # Uncomment the next lines if you need to modify channels/frame rate
-        # audio = audio.set_channels(1)  # Set to mono
-        # audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
-
-        # Export the audio as WAV format
-        audio.export(new_file, format="wav", codec="pcm_s16le")
-
-        # Clean up the original downloaded file
-        os.remove(out_file)
-
-        return new_file, title
-
-    except urllib.error.HTTPError as e:
-        logging.error(f"HTTP Error {e.code}: {e.reason} while accessing {url}")
-    except Exception as e:
-        logging.exception(f"An error occurred while downloading audio: {e}")
-
-    return None, None
-
-
 # def download_audio_youtube(url, name):
 #     """
-#     Downloads audio from a YouTube video and saves it as a .wav file.
+#     Downloads the first 3 minutes of audio from a YouTube video and saves it as a .wav file.
 
 #     Parameters:
 #         url (str): The URL of the YouTube video.
@@ -207,34 +169,85 @@ def download_audio_youtube(url, name):
 #     """
 #     try:
 #         logging.info(f"Attempting to download audio from: {url}")
-        
-#         # Set up yt-dlp options for audio-only download
-#         ydl_opts = {
-#             'format': 'bestaudio/best',
-#             'outtmpl': './%(title)s.%(ext)s',
-#             'postprocessors': [{
-#                 'key': 'FFmpegExtractAudio',
-#                 'preferredcodec': 'wav',
-#                 'preferredquality': '192',
-#             }]
-#         }
+#         yt = YouTube(url, use_oauth=False, allow_oauth_cache=True)
 
-#         # Download audio using yt-dlp
-#         with YoutubeDL(ydl_opts) as ydl:
-#             info_dict = ydl.extract_info(url, download=True)
-#             title = info_dict.get('title', None)
-#             downloaded_file = f"./{title}.wav"
+#         # Check for available audio streams
+#         video = yt.streams.filter(only_audio=True).first()
+#         if video is None:
+#             logging.error("No audio streams available for this video.")
+#             return None, None
 
-#         # Rename and process the file if necessary
-#         if os.path.exists(downloaded_file):
-#             os.rename(downloaded_file, name)
+#         # Download the audio file
+#         out_file = video.download(output_path='./')
+#         title = yt.title
 
-#         return name, title
+#         # Process the audio file
+#         audio = AudioSegment.from_file(out_file)
 
+#         # Trim audio to the first 3 minutes (180000 milliseconds)
+#         trimmed_audio = audio[:60000]  # pydub works in milliseconds
+
+#         # Export the trimmed audio as WAV format
+#         new_file = name
+#         trimmed_audio.export(new_file, format="wav", codec="pcm_s16le")
+
+#         # Clean up the original downloaded file
+#         os.remove(out_file)
+
+#         return new_file, title
+
+#     except urllib.error.HTTPError as e:
+#         logging.error(f"HTTP Error {e.code}: {e.reason} while accessing {url}")
 #     except Exception as e:
 #         logging.exception(f"An error occurred while downloading audio: {e}")
 
 #     return None, None
+
+
+def download_audio_youtube(url, name):
+    """
+    Downloads audio from a YouTube video and saves it as a .wav file.
+
+    Parameters:
+        url (str): The URL of the YouTube video.
+        name (str): The name of the output .wav file.
+
+    Returns:
+        tuple: The path to the saved audio file and the video title.
+    """
+    try:
+        logging.info(f"Attempting to download audio from: {url}")
+
+        if os.path.exists(name):
+            logging.info(f"File '{name}' already exists. It will be replaced.")
+            os.remove(name)
+        
+        # Set up yt-dlp options for audio-only download
+            
+        # name: rec1.wav
+        name = name.split('.')[0] # rec1
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': name,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'wav',
+                'preferredquality': '192',
+            }]
+            # 'postprocessor_args': ['-ss', '60', '-t', '120'] # -ss: start time; -t: duration from start time (secs)
+        }
+
+        # Download audio using yt-dlp
+        with YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=True)
+            title = info_dict.get('title', None)
+
+        return name, title
+
+    except Exception as e:
+        logging.exception(f"An error occurred while downloading audio: {e}")
+
+    return None, None
 
 
 @app.route("/get_window", methods=["POST"])
@@ -469,7 +482,7 @@ def process_audio_data(filename,isDataOne):
     
     t = librosa.frames_to_time(frames,sr=SAMPLE_RATE, hop_length=HOP_LENGTH)
 
-    pitch = snd.to_pitch(time_step=(HOP_LENGTH/SAMPLE_RATE))
+    pitch = snd.to_pitch(time_step=(HOP_LENGTH/SAMPLE_RATE), pitch_floor=50.0, pitch_ceiling=300.0)
     pitch_values = pitch.selected_array['frequency']
 #CHECK IF THIS IS EVEN USEFUL TODO
     #print("t: "+str(t[-1])+" \n tlen: "+str(len(t)))
@@ -596,7 +609,8 @@ def process_audio_data(filename,isDataOne):
             if(not all_nan2):
                 pit_avg = np.nanmean(ynewp[idx_p])
             norm_pit_avg=(pit_avg/(avg_pitch))
-            pit.append(norm_pit_avg)
+            # pit.append(norm_pit_avg)
+            pit.append(pit_avg)
 
 
             #Check for clause ending
@@ -752,6 +766,7 @@ def transcribe():
     url = args['url']
     filename = args['filename']
     isOne=args['isOne']
+
     print("https://www.youtube.com/watch?v="+str(url))
     _, title = download_audio_youtube("https://www.youtube.com/watch?v="+url, filename)
 
@@ -761,18 +776,66 @@ def transcribe():
     df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne)
     #df_word = pd.read_csv('kndebate.csv')#.drop(columns=['num1','num2','num3'])
     ###FIX TO BRING BACK TITLE
-    df_word.to_csv('TranscribedAudio1.csv',index=False)
+
+    # NEW
+    amp_no_zero = list(filter(lambda x: x != 0, df_word['amplitude']))
+    amp_mean = sum(amp_no_zero) / len(amp_no_zero)
+    var_amp = [(el-amp_mean)**2 for el in amp_no_zero]
+    df_word['var_amplitude'] = var_amp
+
+    # any pitch that is <50 or >300, mark as NaN
+    df_word['pitch'] = [el if (el > 50 and el < 300) else np.nan for el in df_word['pitch']]
+        
+    # if rec1
+    if args['isOne']:
+        df_word.to_csv('TranscribedAudio1.csv',index=False)
+    else:
+        df_word.to_csv('TranscribedAudio2.csv',index=False)
     
-    response_data = {
-        "data": df_word.to_json(orient="split"),
-        "title": title,
-        "average_amplitude":avg_amp ,
-        "average_pitch": avg_pitch,
-        "average_speed": avg_speed,
-        "phrase_start": phrase_start,
-        "phrase_end": phrase_end, 
-        "phrase_matches": matches
-    }
+
+    # calculate var pitch only for rec2
+    df_word1 = pd.read_csv('TranscribedAudio1.csv')
+    df_word2 = pd.read_csv('TranscribedAudio2.csv')
+    pitch_no_zero = list(filter(lambda x: x != 0 and not np.isnan(x), df_word2['pitch']))
+    pitch_mean = sum(pitch_no_zero) / len(pitch_no_zero)
+    var_pitch = [(el-pitch_mean)**2/len(pitch_no_zero) for el in pitch_no_zero]
+    min_var_pitch = min(var_pitch)
+    max_var_pitch = max(var_pitch)
+    avg_var_pitch = sum(var_pitch) / len(var_pitch)
+
+    df_word1['min_var_pitch'] = min_var_pitch
+    df_word1['avg_var_pitch'] = avg_var_pitch
+    df_word1['max_var_pitch'] = max_var_pitch
+    df_word1.to_csv('TranscribedAudio1.csv', index=False)
+
+    df_word2['min_var_pitch'] = min_var_pitch
+    df_word2['avg_var_pitch'] = avg_var_pitch
+    df_word2['max_var_pitch'] = max_var_pitch
+    df_word2.to_csv('TranscribedAudio2.csv', index=False)
+
+
+    if args['isOne']:
+        response_data = {
+            "data": df_word1.to_json(orient="split"),
+            "title": title,
+            "average_amplitude":avg_amp ,
+            "average_pitch": avg_pitch,
+            "average_speed": avg_speed,
+            "phrase_start": phrase_start,
+            "phrase_end": phrase_end, 
+            "phrase_matches": matches
+        }
+    else:
+        response_data = {
+            "data": df_word2.to_json(orient="split"),
+            "title": title,
+            "average_amplitude":avg_amp ,
+            "average_pitch": avg_pitch,
+            "average_speed": avg_speed,
+            "phrase_start": phrase_start,
+            "phrase_end": phrase_end, 
+            "phrase_matches": matches
+        }
     
     return jsonify(response_data)
 
@@ -802,7 +865,33 @@ def rec_transcribe():
     audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
 
     df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,isOne )
+
+    # NEW
+
+    # any pitch that is <50 or >300, mark as NaN
+    df_word['pitch'] = [el if (el > 50 and el < 300) else np.nan for el in df_word['pitch']]
+
+    amp2_no_zero = list(filter(lambda x: x != 0 , df_word['amplitude']))
+    amp2_mean = sum(amp2_no_zero) / len(amp2_no_zero)
+    var_amp2 = [(el-amp2_mean)**2 for el in amp2_no_zero]
+    df_word['var_amplitude'] = var_amp2
+
+
     df_word.to_csv('TranscribedAudio2.csv',index=False)
+
+    df_word2 = pd.read_csv('TranscribedAudio2.csv')
+
+    # any pitch that is <50 or   >300, mark as NaN
+    df_word2['pitch'] = [el if (el > 50 and el < 300) else np.nan for el in df_word2['pitch']]
+
+    pitch2_no_zero = list(filter(lambda x: x != 0 and not np.isnan(x), df_word2['pitch']))
+    pitch2_mean = sum(pitch2_no_zero) / len(pitch2_no_zero)
+    var_pitch2 = [(el-pitch2_mean)**2 for el in list(df_word2['pitch'])]
+    df_word2['var_pitch'] = var_pitch2
+
+    df_word2.to_csv('TranscribedAudio2.csv',index=False)
+    # pdb.set_trace()
+
     
     response_data = {
         "data": df_word.to_json(orient="split"),

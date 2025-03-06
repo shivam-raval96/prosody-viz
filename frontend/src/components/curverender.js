@@ -8,6 +8,7 @@ const NumberContext = createContext();
 const localDevURL = "http://127.0.0.1:8000/";
 const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseStatus, normalizeStatus, tiledStatus, name, pauseSlider, speedSlider, timeSlider, videoID, wordDensityToggle, averageAmplitude, averageSpeed, averagePitch, phraseStart, phraseEnd,isOne,dtwCallback,dtwData}) => {
   const margin = {left: 0, top:200};
+  console.log(audio)
   const [showVideo, setShowVideo] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
   const [pausespm, setPausespm] = useState(0);
@@ -20,6 +21,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
   const svgRef = useRef();
   const zoomRef = useRef();
+
+  const totalSpeechLength = getTotalSpeechLength(audio);
 
   let timeSeparation = timeSlider;
   let hoverWidth = 10;
@@ -56,27 +59,80 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
 
     svg.
-    attr("style", "background-color: #ffffff");
+    attr("style", "background-color: ffffff");
 
     // Clear previous content
     svg.selectAll('*').remove();
 
+    // Calculate the midpoint of the amplitude (mean value)
+    const [minAmp, maxAmp] = d3.extent(audio.amp);
+    const midpointAmp = (minAmp + maxAmp) / 2;
+
     var yScale = d3.scaleLinear()
       .domain(d3.extent(audio.amp))
-      .range([height / 2, margin.top]);
+      .range([height/1.7, margin.top]);
+
+    // Calculate the y position of the midpoint using the yScale
+    const midpointY = yScale(midpointAmp);
 
     var noZeroes = audio.pitch.filter(function(d) { return d !== 0; });
     let smallest = d3.min(noZeroes);
+    let largest = d3.max(noZeroes);
+    let median = d3.median(noZeroes);
+    let adj = (largest - median) * 0.5;
 
-    let domain = [75, 125, 300];
+    let pitchMean = d3.mean(audio.pitch);
+    let pitchStdDev = d3.deviation(audio.pitch);
+
+    // Define the range of the data (audio.start and audio.end should be arrays of timestamps)
+  const dataStart = d3.min(audio.start);
+  const dataEnd = d3.max(audio.end);
+
+  // Define the width of your SVG
+  const svgWidth = parseInt(svg.style("width"), 10); // Or a fixed value, e.g., 800
+
+  // Create a linear scale for x-axis mapping
+  const xScale = d3.scaleLinear()
+    .domain([dataStart, dataEnd]) // Input domain (data range)
+    .range([0, svgWidth]); // Output range (pixels in SVG)
+
+
+    let domain = [60, 150, 250];
+    // let domain = [13, 200, 400];
+    console.log('PITCH: ', audio.pitch)
     // let domain = d3.extent(audio.pitch);
     if (normalizeStatus) {
+      // domain = [smallest, median - adj, largest + adj];
+      // domain = [meanPitch - 2 * stdDevPitch, meanPitch, meanPitch + 2 * stdDevPitch];
+      // domain = [0, 30, 158]
+      // domain = [minVarPitch, avgVarPitch, maxVarPitch];
 
-      domain = [smallest, d3.median(noZeroes), d3.max(audio.pitch)];
+      // domain = [pitchMean - 2 * pitchStdDev, pitchMean, pitchMean + 2 * pitchStdDev];
+      // domain = [d3.min(audio.min_var_pitch), d3.min(audio.avg_var_pitch), d3.min(audio.max_var_pitch)]
+      domain = [30, 70, 100];
+      // domain = [d3.min(audio.avg_var_pitch), (d3.min(audio.max_var_pitch) - d3.min(audio.avg_var_pitch))/2, d3.min(audio.max_var_pitch)]
+      // domain = [56, 146, 168];
+      console.log('NORM DOMAIN: ', domain);
     }
-    let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
-    .domain(domain);
+    // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRgb("#8B0000", "#d2b48c", "#5C4033")(1 - t))
+    // .domain(domain);
+
+    let scaleAnomaly = d3.scaleDiverging(t => {
+      // Define a three-color interpolator
+      const colorScale = d3.scaleLinear()
+        .domain(domain) // Normalized domain for t
+        // .range(["#5C4033", "#d2b48c", "#d36b6e"]) // Three colors: brown, tan (beige), pink (highest)
+        .range(["#d3d3d3", "#8b0000", "#ff69b4"])
+        .interpolate(d3.interpolateRgb); // Smooth interpolation
+    
+      return colorScale(t); // Map t to the interpolated color
+    });
+
+    // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
+    // .domain(domain);
+
     if (!normalizeStatus) {
+      domain = [60, 150, 250];
       scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
       .domain(domain);
     }
@@ -87,6 +143,17 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
    
     const g = svg.append('g');
+
+    // Midpoint
+        g.append('line')
+        .attr('x1', margin.left)  // Starting x position (adjust as needed)
+        .attr('x2', width - margin.right)  // Ending x position (adjust as needed)
+        .attr('y1', midpointY)
+        .attr('y2', midpointY)
+        .attr('stroke', 'black')  // Line color
+        .attr('stroke-width', 1);  // Line thickness
+   
+    console.log("Appending midpoint line at y:", midpointY);
     
     let lastEnd = 0;
     setEndings([]);
@@ -94,7 +161,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       if (caedenceStatus){
         if (audio.start[i+1] - audio.end[i] > pauseSlider) {
           //console.log(audio.start[i+1] - audio.end[i])
-          endings.push(i);
+          endings.push(i + 1);
         }
       }else{
         if (audio.end[i] - lastEnd > timeSeparation) {
@@ -102,7 +169,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
           lastEnd = audio.end[i];
         }
       }
-    }
+    }   
+    
     endings.push(audio.time.length-1)
     console.log("Endings Length: "+endings.length+" \n endings: "+endings.toString());
     let offset = 0;
@@ -115,6 +183,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       var new_g = g.append('g');
       new_g.attr("transform", `translate(0,${separation*(j+1)})`);
       new_g.attr("id", name + "g" + j);
+      
       /*endIndex=endings[j];
       lastEnd=endings[j];
       startIndex=(j==0)?0:endings[j-1];*/
@@ -138,18 +207,22 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
             startIndex = endings[offset-1];
           }
           else if(caedenceStatus){
+            console.log('CUT OFF AT PAUSES');
             endIndex=endings[j];
             //lastEnd=endings[j]; 
             startIndex=(j==0)?0:endings[j-1];
+
+            console.log('Start, End: ', startIndex, endIndex)
           }
 
           var XSCALEMULTI=50.0;
           // Set up scales
           
           var xScaleNew = d3.scaleLinear()
-          .domain(d3.extent(audio.end.slice(startIndex, endIndex)))
+          .domain(d3.extent(audio.end.slice(startIndex, endIndex + 1)))
           .range([margin.left, caedenceStatus?((audio.end[endIndex]-audio.start[startIndex])*XSCALEMULTI):1800])
           .clamp(true);
+          
           
           if (tiledStatus){
             let outlinewidth = 5
@@ -169,20 +242,31 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       
           //pauses
           if (audio.start[i+1] - audio.end[i] > pauseSlider) {
-            let pause_data = [[audio.end[i], audio.amp[i+1], audio.pitch[i+1]], [audio.start[i+1], audio.amp[i+1], audio.pitch[i+1]]]; // data to be used for drawing the area path, should be an array of 2 elements
+            let pause_data;
+    
+            if (caedenceStatus) {
+                // Pause placed at the end of the previous segment when caedenceStatus is true
+                pause_data = [[audio.end[i], audio.amp[i], audio.pitch[i]], [audio.start[i+1], audio.amp[i+1], audio.pitch[i+1]]];
+            } else {
+                // Normal behavior: pause between current and next segment
+                pause_data = [[audio.start[i], audio.amp[i], audio.pitch[i]], [audio.end[i], audio.amp[i+1], audio.pitch[i+1]]];
+            }
+    
+            // Add the path for the pause area
             new_g.append('path')
-            .attr('d', tileFunc(pause_data))
-            .attr('stroke', 'black')
-            .attr('stroke-width', outlinewidth).attr('class', "outline pauses")
-            .attr('fill', pauseStatus?'black':'white');
+                .attr('d', tileFunc(pause_data))
+                .attr('stroke', 'black')
+                .attr('stroke-width', outlinewidth)
+                .attr('class', "outline pauses")
+                .attr('fill', caedenceStatus ? 'gray' : (pauseStatus ? 'black' : 'white')); // Set fill to gray when caedenceStatus is true
+        }
+          
 
-            
-
-            
-          }
           let fill, stroke;
+          console.log('PAUSESTATUS: ', pauseStatus)
           if (!pauseStatus) {
             fill = scaleAnomaly(audio.pitch[i]);
+            console.log('CUR AUDIO: ', audio.pitch[i]);
             stroke = '#000000';
           } else {
             fill = '#20202011';
@@ -219,9 +303,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
             mouseOut(j, name, hoverWidth, pauseStatus,outlinewidth);
           });
 
-              
-            
-
 
               if (!pauseStatus){
               new_g.append('path')
@@ -231,7 +312,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
                 return (audio.end[i] - audio.start[i]) * 10;
               })
               .attr('id', i)
-              .attr('fill', 'black');}
+              .attr('fill', 'black');
+            }
 
               
 
@@ -459,8 +541,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
                 .attr('x2', xScaleNew(data[0][0]))
                 .attr('y2', height - yScale(data[0][1]) + pitchScale(audio.pitch[i]))
             }
-
           }
+          
              //TEXT 
              let textFill;
              if (!pauseStatus) {
@@ -474,13 +556,18 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
              }
              if(speed>speedSlider[0] && speed<speedSlider[1]){
             emphwordcount++
+            let xPos = xScaleNew(audio.start[i]);
+            let yPos = (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*6;
              new_g.append('text')
-             .attr('x', xScaleNew(audio.start[i]))
-             .attr('y', (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*(i%5))
+             .attr('x', xPos)
+             .attr('y', yPos)
+             // .attr('y', (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*(i%5))
+             // .attr('y', (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*3)
              .attr('fill', textFill)
              .attr('font-family', 'Arial')
              .attr('font-size', '20px')         
-             .text(audio.word[i]);}
+             .text(audio.word[i])
+             .attr('transform', `rotate(270 ${xPos}, ${yPos})`)}
 
             /* 
             new_g.append('text')
@@ -510,11 +597,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
     svg.call(zoomBehavior).call(zoomBehavior.transform, zoomRef.current);
 
-
-    function makePointer(videoTime, scale){
-      
-    }
-
     var index=endings.findIndex(function(number) {
       return number > videoTime;
     });
@@ -529,7 +611,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     <div className="container">
       <svg ref={svgRef} height={height}></svg>
       
-      <div className="stats" style={{ height: height*0.25 }}>
+      <div className="stats" style={{ width: width * 0.7, height: height*0.3, marginTop: height * 0.2 }}>
         <h6><b>Speaker stats</b></h6>
         Pauses per minute: {pausespm}<br/>
         Words per minute: {wordspm}<br/>
@@ -537,12 +619,25 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
         Average Speaking Speed: {averageSpeed.toFixed(3)}<br/>
         Average Amplitude: {averageAmplitude.toFixed(3)}<br/>
         Average pitch: {averagePitch.toFixed(3)} Hz<br/>
-        Dynamic Pitch Range: {3*pitchrange} Hz
+        Dynamic Pitch Range: {3*pitchrange} Hz <br/>
+        Total Speech Length: {totalSpeechLength} secs
       </div>
     </div>
     </>
   );
 };
+
+function getTotalSpeechLength(audio) {
+  // Check if audio.end exists and has at least one element
+  if (audio && Array.isArray(audio.end) && audio.end.length > 0) {
+    // Return the last value in the 'end' array, which represents the total speech length
+    return audio.end[audio.end.length - 1];
+  } else {
+    // If the audio.end array is empty or undefined, return 0
+    return 0;
+  }
+}
+
 
 function mouseOver(event, j, name, hoverWidth, pauseStatus, text, actualWord, i,phraseStart,phraseEnd) {
   if (!pauseStatus) {
@@ -708,38 +803,6 @@ function drawBoxAroundOneWordHelper(phraseIndex,isOne,endings,phraseStart,phrase
     drawBoxAroundWords(i.toString(),"speaker"+(isOne?"1":"2"),phraseStart[phraseIndex]+1,phraseEnd[phraseIndex]+1,opacity=opacity);
   }
 }
-//const getSavedData= (isOne)=> {isOne?dataOne:dataTwo};
-/*
-function drawBoxAroundWord(groupIndex, groupName, word,i) {
-  // Construct the correct selector for the group and the path element
-  const groupId = `#${groupName}g${groupIndex}`;
-  const pathSelector = `path[data-word='${word.replace("'", "\\'")}'][id='${i}']`; // Adjust to select path instead of text
-
-  console.log(`Group ID: ${groupId}, Path Selector: ${pathSelector}`);
-
-  const pathElement = d3.select(groupId).select(pathSelector);
-
-  if (!pathElement.empty()) {
-      const bbox = pathElement.node().getBBox();
-      //console.log(`Bounding box - x: ${bbox.x}, y: ${bbox.y}, width: ${bbox.width}, height: ${bbox.height}`);
-
-      // Select the group and append a rectangle to highlight the word
-      const group = d3.select(groupId);
-      group.append('rect')
-           .attr('x', bbox.x - 2)  // Slight padding
-           .attr('y', bbox.y - 2)
-           .attr('width',bbox.width + 4)
-           .attr('height',2* bbox.height + 4)
-           .attr('fill', 'none')
-           .attr('stroke', 'red')
-           .attr('stroke-width', 2)
-           .classed('highlight-box', true);  // Class for easy removal or styling
-  } else {
-      console.log("Path element not found or `data-word` attribute mismatch.");
-  }
-}
-*/
-
 
 function mouseOut(j, name, hoverWidth, pauseStatus) {
   if (!pauseStatus) {
@@ -752,16 +815,9 @@ function mouseOut(j, name, hoverWidth, pauseStatus) {
     });
   }
 
-  // if (!pauseStatus) {
-  //   for (let i=0; i < j; i++) {
-  //     d3.select("#" + name + 'g' + i).selectAll('.outline').attr('stroke-width', 2).attr('stroke', '#000000');
-  //   }
-  // }
-
   d3.select("#tooltip").style("visibility", "hidden");
-
-
 }
+
 function return_phrase_index(id,phraseStart,phraseEnd){
   for(let i=0;i<min(phraseStart.length,phraseEnd.length);i++){
     if(phraseStart[i]+1<=id&&phraseEnd[i]+1>=id){
@@ -780,30 +836,5 @@ function return_phrase_bounds(id,phraseStart,phraseEnd){
   }
   return [-1,-1];
 }
-const dtw_comparison = async (id) => {
-  // Set the request payload
-  const payload = {
-    id: id
-  };
-
-  try {
-    // Make the POST request to the backend
-    const response = await axios.post(localDevURL +"get_DTW_comparison", payload);
-
-    // Parse the response
-    const { minDistIndex, isOne, phraseStart, phraseEnd, dists } = response.data;
-
-    // Use the response data as needed
-    console.log('Minimum Distance Index:', minDistIndex);
-    console.log('Distances:', dists);
-
-    // Return the data or handle it as needed
-    return { minDistIndex, isOne, phraseStart, phraseEnd,dists };
-  } catch (error) {
-    console.error('Error making DTW comparison request:', error);
-    // Handle the error as needed
-    return null;
-  }
-};
 
 export default AreaPlot;

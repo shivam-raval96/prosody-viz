@@ -17,23 +17,32 @@ const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
         // Clear previous content
         svg.selectAll('*').remove();
 
-        let domain = [75, 125, 300];;
+        let domain = [75, 90, 100];
         if (normalizeStatus) {
-          domain = [0, 150, 300];
+          domain = [75, 90, 100];
+          let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRgb("#5C4033", "#d36b6e")(t));
         }
-        //let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
-        let scaleAnomaly =  d3.scaleLinear()
-        .range(['#5b64ad', '#66bbaa','#d1eda6', '#f0f9aa',
-        '#fed283', '#ef704a','#cd495b']) 
-        .interpolate(d3.interpolateRgb)
-        .domain(domain);
+
+        let scaleAnomaly = d3.scaleDiverging()
+          .domain(domain)
+          .interpolator(d3.interpolateRgbBasis(["#d3d3d3", "#8b0000", "#ff69b4"]));
+
+    //     let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
+    // .domain(domain);
+
+        // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateBrBG(1 - t))
+        // let scaleAnomaly =  d3.scaleLinear()
+        // .range(['#5b64ad', '#66bbaa','#d1eda6', '#f0f9aa',
+        // '#fed283', '#ef704a','#cd495b']) 
+        // .interpolate(d3.interpolateRgb)
+        // .domain(domain);
         if (!normalizeStatus) {
-         // scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
-         scaleAnomaly =  d3.scaleLinear()
-         .range(['#062f62', '#5f9bc8', '#dce4eb',
-         '#f9e9de', '#f2a98a', '#b32833']) 
-         .interpolate(d3.interpolateRgb)
-         .domain(domain);
+         scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
+        //  scaleAnomaly =  d3.scaleLinear()
+        //  .range(['#062f62', '#5f9bc8', '#dce4eb',
+        //  '#f9e9de', '#f2a98a', '#b32833']) 
+        //  .interpolate(d3.interpolateRgb)
+        //  .domain(domain);
 
           
 

@@ -8,8 +8,10 @@ import Button from '@mui/material/Button';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 //import data3 from "../data/obama_speech.csv"; //k0jJL_YFyIU //Barack Obama's final speech as president – video highlights
 import data3 from "../data/martin_hbs2.csv"; //O_JAZNbj8Pg //Augmenting Human and Machine Intelligence with Data Visualization (Martin Wattenberg)
+//import data3 from "../data/TranscribedAudio1.csv";
 //import data3 from "../data/finale.csv"; //4lIr8rgo5zE
 import data2 from "../data/fernanda_hbs2.csv"; //u5JV88yPoGc //Augmenting Human and Machine Intelligence with Data Visualization (Fernanda Viégas)
+//import data2 from "../data/TranscribedAudio2.csv";
 //import data2 from "../data/obama_interview.csv"; //x3zgCVqqf3Q //Obama: War in Ukraine ‘a wake-up call to Europe’ and democracies around the world
 
 import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize';
@@ -216,7 +218,10 @@ function Homepage() {
         end: [],
         word: [], 
         amp: [],
-        pitch: []
+        pitch: [],
+        min_var_pitch: [],
+        avg_var_pitch: [],
+        max_var_pitch: []
       };
 
       
@@ -224,12 +229,15 @@ function Homepage() {
       console.log(loadedData);
       console.log(typeof loadedData);
       loadedData.data.forEach((e) => {
-        audio.time.push(e[1])
+        audio.time.push(e[10])
         audio.start.push(e[1])
         audio.end.push(e[2])
         audio.word.push(e[0])
-        audio.amp.push(e[9]) //8
-        audio.pitch.push(e[10]);//11
+        audio.amp.push(e[11]) //8
+        audio.pitch.push(e[9])
+        audio.min_var_pitch.push(e[12])
+        audio.avg_var_pitch.push(e[13])
+        audio.max_var_pitch.push(e[14])
       });
       
 
@@ -307,12 +315,12 @@ function Homepage() {
         };
 
         loadedData.forEach((e) => {
-          audio.time.push(e[1])
-          audio.start.push(e[1])
-          audio.end.push(e[2])
-          audio.word.push(e[0])
-          audio.amp.push(e[9]) //8
-          audio.pitch.push(e[10]);//11
+            audio.time.push(e[10])
+            audio.start.push(e[1])
+            audio.end.push(e[2])
+            audio.word.push(e[0])
+            audio.amp.push(e[8])
+            audio.pitch.push(e[9]);
       });
       
 
@@ -380,17 +388,24 @@ function Homepage() {
           end: [],
           word: [],
           amp: [],
-          pitch: []
+          pitch: [],
+          min_var_pitch: [],
+        avg_var_pitch: [],
+        max_var_pitch: []
         };
 
         loadedData.data.forEach((e) => {
-          audio.time.push(e[1])
+          audio.time.push(e[10])
           audio.start.push(e[1])
           audio.end.push(e[2])
           audio.word.push(e[0])
-          audio.amp.push(e[9]) //8
-          audio.pitch.push(e[10]);//11
+          audio.amp.push(e[11])
+          audio.pitch.push(e[9])
+          audio.min_var_pitch.push(e[12])
+          audio.avg_var_pitch.push(e[13])
+          audio.max_var_pitch.push(e[14])
         });
+        console.log('AUDIO: ', audio);
         
   
 
@@ -437,8 +452,9 @@ function Homepage() {
           isOne: isOne
         });
         
-        console.log("SOMETHING IS HAPPENING");
+        console.log("SOMETHING IS HAPPENING: HANDLESEND");
         const loadedData=JSON.parse(response.data.data);
+        console.log(loadedData.data[0]);
         const title=response.data.title;
         const averageAmplitude=response.data.average_amplitude;
         const averagePitch=response.data.average_pitch;
@@ -455,17 +471,23 @@ function Homepage() {
           end: [],
           word: [],
           amp: [],
-          pitch: []
+          pitch: [],
+          min_var_pitch: [],
+        avg_var_pitch: [],
+        max_var_pitch: []
         };
 
         loadedData.data.forEach((e) => {
-          audio.time.push(e[1])
+          // console.log('E: ', e)
+          audio.time.push(e[10])
           audio.start.push(e[1])
           audio.end.push(e[2])
           audio.word.push(e[0])
-          audio.amp.push(e[9]) //8
-          audio.pitch.push(e[10]);//11
-          
+          audio.amp.push(e[11]) //8
+          audio.pitch.push(e[9])
+          audio.min_var_pitch.push(e[12])
+          audio.avg_var_pitch.push(e[13])
+          audio.max_var_pitch.push(e[14])
         });
         
   
@@ -527,12 +549,12 @@ function Homepage() {
           };
   
           loadedData.forEach((e) => {
-            audio.time.push(e[1])
-            audio.start.push(e[1])
-            audio.end.push(e[2])
-            audio.word.push(e[0])
-            audio.amp.push(e[9]) //8
-            audio.pitch.push(e[10]);//11
+            audio.time.push(e[10])
+          audio.start.push(e[1])
+          audio.end.push(e[2])
+          audio.word.push(e[0])
+          audio.amp.push(e[8])
+          audio.pitch.push(e[9]);
         });
         
   
@@ -756,12 +778,73 @@ function Homepage() {
 
         </IconButton>
         </div>
-          <div className="col-lg-5 speaker1">
-            {(speaker1)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker1} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker1"} pauseSlider={pauseSlider} speedSlider={speedvalue} videoID={speaker1url} timeSlider={timeSlider} videoTime={videoTime} averageAmplitude={averageAmplitude1} averageSpeed={averageSpeed1} averagePitch={averagePitch1} phraseStart={phraseStart1} phraseEnd={phraseEnd1} isOne={true} dtwCallback={highlightDTWMatch} dtwData={dtwData1}/>:null}
-          </div>
-          <div className="col-lg-5 speaker2">
-          {(speaker2)?<CurveRender videoHandler={handleVideoChange} wordDensityToggle={wordDensityCheck} audio={speaker2} width={window.innerWidth / 2} height={window.innerHeight *0.8} caedenceStatus ={caedenceCheck} pauseStatus={pauseCheck} normalizeStatus={normalCheck} tiledStatus={tiled} name={"speaker2"} pauseSlider={pauseSlider} speedSlider={speedvalue} timeSlider={timeSlider} videoID={speaker2url} averageAmplitude={averageAmplitude2} averageSpeed={averageSpeed2} averagePitch={averagePitch2} phraseStart={phraseStart2} phraseEnd={phraseEnd2} isOne={false} dtwCallback={highlightDTWMatch} dtwData={dtwData2}/>:null}
-          </div>
+        <div className="col-lg-5 speaker1">
+          {speaker1 && (
+            <>
+              <CurveRender
+                videoHandler={handleVideoChange}
+                wordDensityToggle={wordDensityCheck}
+                audio={speaker1}
+                width={window.innerWidth / 2}
+                height={window.innerHeight * 0.8}
+                caedenceStatus={caedenceCheck}
+                pauseStatus={pauseCheck}
+                normalizeStatus={normalCheck}
+                tiledStatus={tiled}
+                name="speaker1"
+                pauseSlider={pauseSlider}
+                speedSlider={speedvalue}
+                timeSlider={timeSlider}
+                videoID={speaker1url}
+                videoTime={videoTime}
+                averageAmplitude={averageAmplitude1}
+                averageSpeed={averageSpeed1}
+                averagePitch={averagePitch1}
+                phraseStart={phraseStart1}
+                phraseEnd={phraseEnd1}
+                isOne={true}
+                dtwCallback={highlightDTWMatch}
+                dtwData={dtwData1}
+              />
+              <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} />
+            </>
+          )}
+        </div>
+        <div className="col-lg-5 speaker2">
+          {speaker2 && (
+            <>
+              <CurveRender
+                videoHandler={handleVideoChange}
+                wordDensityToggle={wordDensityCheck}
+                audio={speaker2}
+                width={window.innerWidth / 2}
+                height={window.innerHeight * 0.8}
+                caedenceStatus={caedenceCheck}
+                pauseStatus={pauseCheck}
+                normalizeStatus={normalCheck}
+                tiledStatus={tiled}
+                name="speaker2"
+                pauseSlider={pauseSlider}
+                speedSlider={speedvalue}
+                timeSlider={timeSlider}
+                videoID={speaker2url}
+                videoTime={videoTime}
+                averageAmplitude={averageAmplitude2}
+                averageSpeed={averageSpeed2}
+                averagePitch={averagePitch2}
+                phraseStart={phraseStart2}
+                phraseEnd={phraseEnd2}
+                isOne={false}
+                dtwCallback={highlightDTWMatch}
+                dtwData={dtwData2}
+              />
+              <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} />
+            </>
+          )}
+        </div>
+
+
+
         </div>
       </div>
       {showVideo && videoId && (
@@ -802,7 +885,10 @@ function grabData(data2, set_Data) {
       word: [],
       amp: [],
       pitch: [],
-      iskeyword:[]
+      iskeyword:[],
+      min_var_pitch: [],
+      avg_var_pitch: [],
+      max_var_pitch: []
     };
     for (let i = 0; i < loadedData.length; i++) {
       audio.time.push(loadedData[i].start);
@@ -811,6 +897,9 @@ function grabData(data2, set_Data) {
       audio.word.push(loadedData[i].word);
       audio.amp.push(loadedData[i].vol);
       audio.pitch.push(loadedData[i].pitch);
+      audio.min_var_pitch.push(loadedData[i][12]);
+      audio.avg_var_pitch.push(loadedData[i][13]);
+      audio.max_var_pitch.push(loadedData[i][14]);
     }
     audio.amp = movingAverage(audio.amp, 5);
     audio.pitch = movingAverage(audio.pitch, 3);
@@ -846,5 +935,59 @@ function roundToThreeSignificantDigits(num) {
   
   return sign * rounded;
 }   
+
+function Ticks({ width, timeSlider, marginLeft = 11 }) {
+  const interval = 5; // Interval between tick marks (seconds)
+  const maxValue = Math.ceil(timeSlider / interval) * interval; // Ensure the highest tick aligns with the interval
+  const numTicks = maxValue / interval; // Total number of ticks
+  const tickSpacing = width / numTicks; // Spacing between ticks
+
+  return (
+    <svg
+      width={width}
+      height={30}
+      style={{
+        display: 'block',
+        marginLeft: `${marginLeft}px`, // Adjust alignment
+      }}
+    >
+      {/* Base Line */}
+      <line
+        x1="0"
+        y1="10"
+        x2={width}
+        y2="10"
+        stroke="black"
+        strokeWidth="1"
+      />
+      {/* Tick marks and labels */}
+      {Array.from({ length: numTicks + 1 }).map((_, index) => {
+        const x = index * tickSpacing; // Position of the tick
+        const timeLabel = index * interval; // Tick label value
+        return (
+          <g key={index} transform={`translate(${x}, 10)`}>
+            {/* Tick */}
+            <line y1="0" y2="8" stroke="black" />
+            {/* Label */}
+            <text
+              y="20"
+              x="0"
+              textAnchor="middle"
+              style={{
+                fontSize: '10px',
+                fontFamily: 'Arial, sans-serif',
+                fill: 'black',
+              }}
+            >
+              {timeLabel}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+
 
 export default Homepage;

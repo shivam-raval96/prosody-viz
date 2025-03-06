@@ -141,8 +141,8 @@ def generate():
     df_word['pitch'] = pit'''
 
 
-    df_word = pd.read_csv('martin_hbs2.csv').drop(columns=['num1','num2','num3'])
-    
+   # df_word = pd.read_csv('martin_hbs2.csv').drop(columns=['num1','num2','num3'])
+    df_word = pd.read_csv('TranscribedAudio1.csv').drop(columns=['num1','num2','num3'])
     
     return df_word.to_json(orient="split")
 
