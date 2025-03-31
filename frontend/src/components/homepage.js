@@ -633,29 +633,43 @@ function Homepage() {
               <div className="card">
                 <h3 className="card-header bg-white">Controls</h3>
               <div className="form-check form-switch">
+                <Tooltip title="Only depicts pauses">
                 <input className="form-check-input" checked={pauseCheck} onChange={toggle} type="checkbox" id="pauseSwitch" />
                 <label className="form-check-label" for="pauseSwitch">View Only Pauses</label>
+                </Tooltip>
               </div>
               <div className="form-check form-switch">
+                <Tooltip title="Forces a new line at each pause.">
                 <input className="form-check-input" checked={caedenceCheck} onChange={toggleCaedence} type="checkbox" id="caedenceSwitch" />
                 <label className="form-check-label" for="caedenceSwitch">Cut off at Pauses</label>
+                </Tooltip>
               </div>
               <div className="form-check form-switch">
+                <Tooltip title="Separates amplitude and pitch visualizations.">
                 <input className="form-check-input" checked={tiled} onChange={toggleTiled} type="checkbox" id="tiledSwitch" />
                 <label className="form-check-label" for="tiledSwitch">Tiled View</label>
+                </Tooltip>
               </div>
               <div className="form-check form-switch">
+                <Tooltip title="Normalized pitch coloring between both audio clips.">
                 <input className="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
                 <label className="form-check-label" for="normalSwitch">Normalize</label>
+                </Tooltip>
               </div>
               <div className="form-check form-switch">
+                <Tooltip title="Adds additional visualizations for distinct words.">
                 <input className="form-check-input" checked={wordDensityCheck} onChange={densityToggle} type="checkbox" id="normalSwitch" />
                 <label className="form-check-label" for="normalSwitch">View Word Density</label>
+                </Tooltip>
               </div>
               <label for="customRange3" id="pauseRange" className="form-label">Pause Length: 1.0 seconds</label>
               <input onChange={pauseSlide} type="range" className="form-range" min="0.2" max="2" step="0.1" value={pauseSlider} id="customRange3"></input>
               <hr/>
+              
+              <Tooltip title="Depicts words with lengths within this range.">
               <label for="customRange4" id="speedRange" className="form-label">Show emphasized words</label>
+              
+              </Tooltip>
               <Slider
                   value={speedvalue}
                   onChange={handleChange}
@@ -673,9 +687,12 @@ function Homepage() {
             <div className="card legend-card">
               <h3 className="card-header bg-white">Legend</h3>
             <div className="legend">
-              <Legend width={225} height={40} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
+              <Legend width={'calc(16vw - 30px)'} height={40} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
             </div>
-            <p><b>Low Pitch</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>High Pitch</b></p>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <b>Low Pitch</b>
+              <b>High Pitch</b>
+            </div>
             <hr></hr>
             Volume is represented with the width
             <hr/>
@@ -687,25 +704,26 @@ function Homepage() {
           </div>
           <div id="tooltip"></div>
           <div className="rec1" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <AudioRecorder onRecordingComplete={setBlob} recorderControls={recorder} />
-          <div>
-          {audioUrl && <audio controls className="player1" src={audioUrl}></audio>}
-          </div>
-        
-       
           <Button
             component="label"
             role={undefined}
             variant="contained"
             tabIndex={-1}
-            startIcon={<CloudUploadIcon />}
+            startIcon={<CloudUploadIcon sx={{ border: 'none',}}/>}
             >
             Upload file   
               <VisuallyHiddenInput type="file" 
               accept=".wav,video/mp4/mp3"
               onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1,true)}
               />
-          </Button>     
+          </Button> 
+          <AudioRecorder onRecordingComplete={setBlob} recorderControls={recorder} />
+          <div>
+          {audioUrl && <audio controls style={{marginLeft: 'auto'}} className="player1" src={audioUrl} style={{transform: 'translateX(50%)',}}></audio>}
+          </div>
+        
+       
+              
           </div>
           
           
@@ -729,7 +747,7 @@ function Homepage() {
         
         <IconButton aria-label="send">
 
-        {(loading1)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
+        {(loading1)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"style={{}}/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
 
         </IconButton>
         
@@ -737,25 +755,30 @@ function Homepage() {
         </div>
         
         <div className="rec2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
-          <AudioRecorder onRecordingComplete={setBlob2} recorderControls={recorder2} />
-          
-          <div>
-          {audioUrl2 && <audio controls className="player2" src={audioUrl2}></audio>}
-          </div>
-          
-          <Button
+        <Button 
             component="label"
             role={undefined}
             variant="contained"
             tabIndex={-1}
-            startIcon={<CloudUploadIcon />}
+            startIcon={<CloudUploadIcon disableRipple
+              disableFocusRipple
+              sx={{
+                border: 'none',
+              }}
+            />}
             >
             Upload file
               <VisuallyHiddenInput type="file" 
               accept=".wav,video/mp4"
               onChange={(event) => handleUpload(event,setData2,setVideoTitle2,setLoading2,false )}
               />
-          </Button>   
+          </Button>
+          <AudioRecorder onRecordingComplete={setBlob2} recorderControls={recorder2} />
+          
+          <div>
+          {audioUrl2 && <audio controls className="player2" src={audioUrl2} style={{transform: 'translateX(50%)',}}/>}
+          </div>
+             
           
           </div>
           
@@ -772,9 +795,9 @@ function Homepage() {
           size="small"
         /> 
         </Tooltip> 
-        <IconButton aria-label="send">
+        <IconButton aria-label="send" >
 
-        {(loading2)?<CircularProgress size="1.5rem"  color="inherit"style={{}}/>:<SendIcon onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2,false)}/>}
+        {(loading2)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2,false)}/>}
 
         </IconButton>
         </div>

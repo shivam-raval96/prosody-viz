@@ -4,35 +4,33 @@ from flask_cors import CORS #comment this on deployment
 from flask_restful import reqparse
 from flask import jsonify
 import pandas as pd
-import io
-from ast import literal_eval
 import numpy as np
-import heapq
+
 import json
-import math
 import ssl
 import os
 import logging
-import urllib
-import pdb
 
+
+# import urllib
+# import pdb
+# import heapq
+# import io
+# import math
 #from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 #from ibm_watson import SpeechToTextV1
+#from ast import literal_eval
+#import pysptk
+# from dtaidistance import dtw
+# from dtaidistance import dtw_visualisation as dtwvis
 
 from pydub import AudioSegment
 from yt_dlp import YoutubeDL
 import parselmouth
 import librosa
-from scipy.io import wavfile
-import resampy
 from scipy import interpolate
-#import pysptk
-from pytube import YouTube
-import os
 import whisper_timestamped as whisper
 
-from dtaidistance import dtw
-from dtaidistance import dtw_visualisation as dtwvis
 from dtaidistance import dtw_ndim
 
 try:
