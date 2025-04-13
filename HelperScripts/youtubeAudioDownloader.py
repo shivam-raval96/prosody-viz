@@ -19,5 +19,5 @@ def download_audio(youtube_url):
         print("Audio has been downloaded")
 
 # Example usage
-youtube_url = 'https://www.youtube.com/watch?v=1aA1WGON49E'
+youtube_url = 'https://www.youtube.com/watch?v=arj7oStGLkU'
 download_audio(youtube_url)

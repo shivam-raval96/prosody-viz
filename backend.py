@@ -24,6 +24,7 @@ import logging
 # from dtaidistance import dtw
 # from dtaidistance import dtw_visualisation as dtwvis
 
+import pickle
 from pydub import AudioSegment
 from yt_dlp import YoutubeDL
 import parselmouth
@@ -72,6 +73,35 @@ startTimeIndex2=[]
 endTimeIndex1=[]
 endTimeIndex2=[]
 timeIndex=[]
+
+processed_files_library = []  # Each item is [filename, processed_data_dict]
+
+# File to store processed_files_library
+PROCESSED_FILES_PATH = "processed_files_library.json"
+
+# Load processed_files_library from file
+def load_processed_files_library():
+    global processed_files_library
+    if os.path.exists(PROCESSED_FILES_PATH):
+        try:
+            with open(PROCESSED_FILES_PATH, "rb") as file:
+                processed_files_library = pickle.load(file)
+        except Exception as e:
+            print(f"Error loading binary file: {e}. Reinitializing processed_files_library.")
+            processed_files_library = []
+    else:
+        processed_files_library = []
+
+
+def save_processed_files_library():
+    try:
+        with open(PROCESSED_FILES_PATH, "wb") as file:
+            pickle.dump(processed_files_library, file)
+    except Exception as e:
+        print(f"Error saving binary file: {e}")
+
+
+
 #MFCC functions
 def pre_emphasis(signal, pre_emphasis_coefficient=0.97):
     return np.append(signal[0], signal[1:] - pre_emphasis_coefficient * signal[:-1])
@@ -450,14 +480,25 @@ def get_DTW_matches():
     return jsonify(response_data) 
 
 
+
 #isData one is a bool: true for 1, false for 2
-def process_audio_data(filename,isDataOne):
+def process_audio_data(filename,isDataOne, title):
+    load_processed_files_library()
     #Maybe adjust based on audio?
     MIN_SENTENCE_CONFIDENCE_THRESHOLD=0.4 #For sentence confidence
     MIN_WORD_CONFIDENCE_THRESHOLD=0.3 #For word confidence 
     # Add explanation for what is confidence TODO
-
-    
+    for saved_filename, saved_data in processed_files_library:
+        if saved_filename == title:
+            return (
+                saved_data["df_word"],
+                saved_data["avg_amp"],
+                saved_data["avg_pitch"],
+                saved_data["avg_speed"],
+                saved_data["phrase_start"],
+                saved_data["phrase_end"],
+                saved_data["matches"],
+            )
 
     audio=whisper.load_audio(filename)
     results=whisper.transcribe(model, audio, language="en")
@@ -482,16 +523,9 @@ def process_audio_data(filename,isDataOne):
 
     pitch = snd.to_pitch(time_step=(HOP_LENGTH/SAMPLE_RATE), pitch_floor=50.0, pitch_ceiling=300.0)
     pitch_values = pitch.selected_array['frequency']
-#CHECK IF THIS IS EVEN USEFUL TODO
-    #print("t: "+str(t[-1])+" \n tlen: "+str(len(t)))
-    tck = interpolate.splrep(t, ae, s=0) #Expand variable names TODO
-    #print("TCK: \n"+str(tck[-1])+"TCK \n")
-    #print("\n PXS :" +str(pitch.xs()[-1])+"\n")
+    tck = interpolate.splrep(t, ae, s=0) 
     stepNum = (int)(pitch.xs()[-1]*100)
     xnew = np.linspace(0,pitch.xs()[-1],num=stepNum)
-    #print(str(pitch.xs()[-1])+" time compari "+str(t[-1]))
-    #print("TCK: \n"+str(xnew)+"TCK \n")
-    #print("LEN: "+str(len(xnew))+" 2: "+str(len(ae)))
     ynew = interpolate.splev(xnew, tck, der=0)
     avg_amp=np.nanmean(ynew)
     tckp = interpolate.splrep(pitch.xs(), pitch_values, s=0)
@@ -742,9 +776,29 @@ def process_audio_data(filename,isDataOne):
         else:
             print(f"Request failed with status code: {response.status_code}")
         """
+    
+    processed_data = {
+        "df_word": df_word,
+        "avg_amp": avg_amp,
+        "avg_pitch": avg_pitch,
+        "avg_speed": avg_speed,
+        "phrase_start": phraseStart,
+        "phrase_end": phraseEnd,
+        "matches": matches
+    }
+    processed_files_library.append([title, processed_data])
+    save_processed_files_library()
+
+
     return df_word, avg_amp, avg_pitch, avg_speed, phraseStart,phraseEnd, matches
 #Cut phrasestart and phrase end since they are global TODO
 
+def check_dataframes(response_data):
+    for key, value in response_data.items():
+        if isinstance(value, pd.DataFrame):
+            print(f"{key} is a DataFrame.")
+        else:
+            print(f"{key} is not a DataFrame; it is a {type(value).__name__}.")
 
 
 # Serve home route
@@ -771,7 +825,7 @@ def transcribe():
 
 
     
-    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne)
+    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne, title)
     #df_word = pd.read_csv('kndebate.csv')#.drop(columns=['num1','num2','num3'])
     ###FIX TO BRING BACK TITLE
 
@@ -812,30 +866,35 @@ def transcribe():
     df_word2.to_csv('TranscribedAudio2.csv', index=False)
 
 
+
+
+
     if args['isOne']:
         response_data = {
-            "data": df_word1.to_json(orient="split"),
+            "data": json.loads(df_word1.to_json(orient="split")),
             "title": title,
-            "average_amplitude":avg_amp ,
+            "average_amplitude": avg_amp,
             "average_pitch": avg_pitch,
             "average_speed": avg_speed,
-            "phrase_start": phrase_start,
-            "phrase_end": phrase_end, 
+            "phrase_start":  phrase_start,
+            "phrase_end": phrase_end,
             "phrase_matches": matches
         }
     else:
         response_data = {
-            "data": df_word2.to_json(orient="split"),
+            "data": json.loads(df_word2.to_json(orient="split")),
             "title": title,
-            "average_amplitude":avg_amp ,
+            "average_amplitude": avg_amp,
             "average_pitch": avg_pitch,
             "average_speed": avg_speed,
             "phrase_start": phrase_start,
-            "phrase_end": phrase_end, 
+            "phrase_end":  phrase_end,
             "phrase_matches": matches
         }
-    
+    #check_dataframes(response_data)
+
     return jsonify(response_data)
+
 
 @app.route("/rec-transcribe", methods=["POST"])
 def rec_transcribe():
@@ -931,7 +990,7 @@ def upload_transcribe():
     audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
     audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
 
-    df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,bool(isOne))
+    df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,bool(isOne),filename)
     df_word.to_csv('TranscribedAudio3.csv',index=False)
 
     print("SUCCESS")

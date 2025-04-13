@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import CurveRender from './curverender';
 import Legend from './legend';
 
+
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -24,6 +25,8 @@ import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
 import Slider from '@mui/material/Slider';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 //import TextRender from './components/textrender';
 import * as d3 from 'd3';
@@ -41,6 +44,8 @@ function Homepage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFileURL, setUploadedFileURL] =useState();
 
+
+  const [presetNumber, setPresetNumber] = useState(0);
 
   const [speaker1, setData] = useState(null);
   const [speaker2, setData2] = useState(null);
@@ -62,7 +67,7 @@ function Homepage() {
 
   const [speedSlider, setSpeedSlider] = useState(0.03);
   const [timeSlider, setTimeSlider] = useState(30);
-  const [speedvalue, setValue] = React.useState([0.05,0.07]);
+  const [speedvalue, setValue] = React.useState([0,0]);
 
   const[phraseMatches1, setPhraseMatches1] =useState([[]]); //index -> audio 1, value -> audio2 ; searching from audio 1 is O(1), searching from audio 2 is O(n)
   const[phraseMatches2, setPhraseMatches2] =useState([[]]); //index -> audio 1, value -> audio2 ; searching from audio 1 is O(1), searching from audio 2 is O(n)
@@ -90,7 +95,7 @@ function Homepage() {
   const [phraseEnd1, setPhraseEnd1]=useState([]);
   const [phraseEnd2, setPhraseEnd2]=useState([]);
   const recorder = useAudioRecorder();
-  const recorder2 = useAudioRecorder();
+//  const recorder2 = useAudioRecorder();
 
 
   const [showVideo, setShowVideo] = useState(false);
@@ -100,7 +105,23 @@ function Homepage() {
 
   const [dtwData1, setDtwData1] = useState(-1);
   const [dtwData2, setDtwData2] = useState(-1);
+  const urlOptions = [
+    [
+    { name: "Dramatic Reading - Ozymandias", url: "TiHqSX2f2Js" },
+    { name: "Shortest Ted-Talk", url: "1aA1WGON49E" }
+    ],
+    [
+      { name: "Public Speaking - TED", url: "J-X9qZ_JfTA" }
+    ],
+    [
+    { name: "Academic presentation ", url: "dh0pJdgY6Lc" }
+    ]
 
+  ];
+
+  const [selectedUrl, setSelectedUrl] = useState(urlOptions[presetNumber][0]);
+
+  //Video showing is disabled
   const handleVideoChange = (time, id) => {
     return;
     setVideoTime(time);
@@ -192,12 +213,13 @@ function Homepage() {
     formData.append("isOne",isOne?"1":"0");
 
     try {
+      console.log("Upload Started");
       const response = await axios.post(localDevURL + "upload-transcribe", formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-      console.log("SOMETHING IS HAPPENING");
+      console.log("Upload Received");
       console.log("TITLE: "+response.data.title);
       const loadedData=JSON.parse(response.data.data);
       //console.log("LD: "+loadedData);
@@ -453,7 +475,7 @@ function Homepage() {
         });
         
         console.log("SOMETHING IS HAPPENING: HANDLESEND");
-        const loadedData=JSON.parse(response.data.data);
+        const loadedData=response.data.data;
         console.log(loadedData.data[0]);
         const title=response.data.title;
         const averageAmplitude=response.data.average_amplitude;
@@ -628,7 +650,42 @@ function Homepage() {
           <div className="upload2">
           </div>
         <div className="container-fluid">
-          
+          <div className="row no-gutters">
+            <div className="card">
+              <h3 className="card-header bg-white">Presets</h3>
+              <div className="card-body">
+                <div className="btn-group" role="group" aria-label="Preset Buttons">
+                  <button
+                    className={`btn btn-square ${
+                      presetNumber === 0 ? "btn-secondary" : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setPresetNumber(0)}
+                  >
+                    Dramatic
+                  </button>
+                  <button
+                    className={`btn btn-square ${
+                      presetNumber === 1 ? "btn-secondary" : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setPresetNumber(1)}
+                  >
+                    Public
+                  </button>
+                  <button
+                    className={`btn btn-square ${
+                      presetNumber === 2 ? "btn-secondary" : "btn-outline-secondary"
+                    }`}
+                    onClick={() => setPresetNumber(2)}
+                  >
+                    Science
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+
           <div className="row no-gutters">
               <div className="card">
                 <h3 className="card-header bg-white">Controls</h3>
@@ -666,7 +723,7 @@ function Homepage() {
               <input onChange={pauseSlide} type="range" className="form-range" min="0.2" max="2" step="0.1" value={pauseSlider} id="customRange3"></input>
               <hr/>
               
-              <Tooltip title="Depicts words with lengths within this range.">
+              {/* <Tooltip title="Depicts words with lengths within this range.">
               <label for="customRange4" id="speedRange" className="form-label">Show emphasized words</label>
               
               </Tooltip>
@@ -677,7 +734,7 @@ function Homepage() {
                   step={0.01}
                   min={0.02}
                   max={0.12}
-                />
+                /> */}
               <label for="customRange5" id="timeRange" className="form-label">Each line represents 30 seconds of speaking</label>
               <input onChange={timeSlide} type="range" className="form-range" min="10" max="90" step="10" value={timeSlider} id="customRange5"></input>
 
@@ -726,24 +783,8 @@ function Homepage() {
               
           </div>
           
-          
-          
-          
-          <div className="title1">
-          Video Title: {videotitle1}
-          </div>
           <div className="url1">
-          <Tooltip title="Enter Youtube link">
-          <TextField
-          label="Speaker 1"
-          id="outlined-size-small"
-          defaultValue="Enter Youtube link"
-          value={speaker1url}
-          onChange={(e)=>setSpeaker1url(e.target.value)}
-          size="small"
-        />
-                  
-        </Tooltip>
+          
         
         <IconButton aria-label="send">
 
@@ -753,40 +794,37 @@ function Homepage() {
         
         
         </div>
+          
+          
+          
+          <div className="title1">
+          Video Title: {videotitle1}
+          </div>
         
-        <div className="rec2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '10px' }}>
-        <Button 
-            component="label"
-            role={undefined}
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<CloudUploadIcon disableRipple
-              disableFocusRipple
-              sx={{
-                border: 'none',
-              }}
-            />}
-            >
-            Upload file
-              <VisuallyHiddenInput type="file" 
-              accept=".wav,video/mp4"
-              onChange={(event) => handleUpload(event,setData2,setVideoTitle2,setLoading2,false )}
-              />
-          </Button>
-          <AudioRecorder onRecordingComplete={setBlob2} recorderControls={recorder2} />
-          
-          <div>
-          {audioUrl2 && <audio controls className="player2" src={audioUrl2} style={{transform: 'translateX(50%)',}}/>}
-          </div>
-             
-          
-          </div>
+        
           
           <div className="title2">
           Video Title: {videotitle2}
           </div>
+          
           <div className="url2">
-          <Tooltip title="Enter Youtube link">
+          <Select
+            value={selectedUrl.url} // Use the `url` property of the selected option
+            onChange={(e) => {
+              const selectedOption = urlOptions[presetNumber].find(option => option.url === e.target.value);
+              setSelectedUrl(selectedOption); // Update the selected option
+              setSpeaker2url(selectedOption.url); // Update speaker2url with the selected URL
+            }}
+            size="small"
+            sx={{ marginLeft: 0, width: '300px' }} // Adjust width as needed
+          >
+            {urlOptions[presetNumber].map((option, index) => (
+              <MenuItem key={index} value={option.url}>
+                {option.name}
+              </MenuItem>
+            ))}
+          </Select>
+          {/* <Tooltip title="Enter Youtube link">
            <TextField
           label="Speaker 2"
           id="outlined-size-small"
@@ -794,7 +832,8 @@ function Homepage() {
           onChange={(e)=>setSpeaker2url(e.target.value)}
           size="small"
         /> 
-        </Tooltip> 
+        </Tooltip> */}
+        
         <IconButton aria-label="send" >
 
         {(loading2)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2,false)}/>}
