@@ -28,6 +28,12 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import CloseIcon from '@mui/icons-material/Close';
+
 //import TextRender from './components/textrender';
 import * as d3 from 'd3';
 const localDevURL = "http://127.0.0.1:8000/";
@@ -65,6 +71,7 @@ function Homepage() {
   const [wordDensityCheck, setWordDensityCheck] = useState(false);
   const [pauseSlider, setPauseSlider] = useState(1.0);
 
+  const [amplitudeScale, setAmplitudeScale] = useState(1.0); // New state for amplitude scale
   const [speedSlider, setSpeedSlider] = useState(0.03);
   const [timeSlider, setTimeSlider] = useState(30);
   const [speedvalue, setValue] = React.useState([0,0]);
@@ -97,24 +104,48 @@ function Homepage() {
   const recorder = useAudioRecorder();
 //  const recorder2 = useAudioRecorder();
 
+  const [legendOpen, setLegendOpen] = useState(true);
 
-  const [showVideo, setShowVideo] = useState(false);
+
+  const [videoPlaybackEnabled, setVideoPlaybackEnabled] = useState(false);
+  const [showVideo, setShowVideo] = useState(true);
   const [videoTime, setVideoTime] = useState(0);
   const [videoId, setVideoId] = useState(null);
 
 
   const [dtwData1, setDtwData1] = useState(-1);
   const [dtwData2, setDtwData2] = useState(-1);
+
+
   const urlOptions = [
     [
-    { name: "Dramatic Reading - Ozymandias", url: "TiHqSX2f2Js" },
-    { name: "Shortest Ted-Talk", url: "1aA1WGON49E" }
+    { name: "Ozymandias read by Richard Attenborough", url: "TiHqSX2f2Js" },
+    { name: "Ozymandias read by Bryan Cranston", url: "Sum6A2enC6s" },
+    { name: "Ozymandias - Ballad of Buster Scruggs", url: "GdQKUvv3bew" },
+    { name: "Ozymandias (RedFrost)", url: "Tb2RVgLQV-A" },
+    { name: "Ozymandias read by Tom O'Bedlam", url: "i7JOCJX-N7c" },
+    { name: "Ozymandias read by Ben Kingsley", url: "krbX-9ugbI4" },
+    { name: "Ozymandias (Everyday Poetry)", url: "--M2rCHbIBM" },
+    { name: "Ozymandias (Pearls of Wisdom)", url: "BAYk2HX1AWk" }
+    // { name: "Shortest Ted-Talk", url: "1aA1WGON49E" },
+    // { name: "Test 3", url: "i5Q02YX2VTw" }
     ],
     [
-      { name: "Public Speaking - TED", url: "J-X9qZ_JfTA" }
+      { name: "Barack Obama Introduction Speech", url: "XU-BUWZPVo0" },
+      { name: "American Miss Personal Introduction", url: "moUg0GVGryg" },
+      { name: "Generalizable Patterns for Humans and AI - TED", url: "J-X9qZ_JfTA" },
+      { name: "AI Presentation", url: "WX7mTMXTuy4" },
+      { name: "How to Study Hard", url: "YDV1mo7QlnA" },
+      { name: "Confusion - Feynman", url: "lytxafTXg6c" },
+      { name: "The Curiosity Gene", url: "HhPZ7yx8ttg" }
     ],
     [
-    { name: "Academic presentation ", url: "dh0pJdgY6Lc" }
+    { name: "Privacy in Distributed Web Services", url: "-dEpRjA7QV4" },
+    { name: "Usng Negotiation as a Tool", url: "3QdUPZ2tuu8" },
+    { name: "Utilitarianism", url: "03ESwNlyG8k" },
+    { name: "Three Minute Thesis", url: "dh0pJdgY6Lc" },
+    { name: "Inside the Mind of a Master Procastinator", url: "arj7oStGLkU" }
+
     ]
 
   ];
@@ -122,11 +153,11 @@ function Homepage() {
   const [selectedUrl, setSelectedUrl] = useState(urlOptions[presetNumber][0]);
 
   //Video showing is disabled
-  const handleVideoChange = (time, id) => {
-    return;
+  const handleVideoChange = (time, id, doesShowVideo = true) => {
+    if(!videoPlaybackEnabled) return;
     setVideoTime(time);
     setVideoId(id);
-    setShowVideo(true);
+    setShowVideo(doesShowVideo);
   };
 
   
@@ -148,7 +179,9 @@ function Homepage() {
 
   const toggle = (event) => {
     pauseCheckStatus(event.target.checked);
-    // You might want to update the data or do something else when the toggle is hit
+  };
+  const toggleVideo = (event) => {
+    setVideoPlaybackEnabled(event.target.checked);
   };
   const toggleCaedence = (event) => {
     setcaedenceCheck(event.target.checked);
@@ -171,14 +204,12 @@ function Homepage() {
     setPauseSlider(event.target.value);
 
     document.querySelector("#pauseRange").innerHTML = "Pause Length: " + event.target.value + " seconds"
-    // You might want to update the data or do something else when the toggle is hit
   };
 
   const speedSlide = (event) => {
     setSpeedSlider(event.target.value);
 
     document.querySelector("#speedRange").innerHTML = "Show slowly utterred words below " + event.target.value + " s"
-    // You might want to update the data or do something else when the toggle is hit
   };
 
   const VisuallyHiddenInput = styled('input')({
@@ -195,6 +226,8 @@ function Homepage() {
   
   const handleUpload = async (event, callback,callback2,callback3,isOne) => {
       
+
+
     const file = event.target.files[0];
     
     console.log("isOne"+isOne)
@@ -466,6 +499,8 @@ function Homepage() {
   };
 
   const handleSend = async (filename, url, callback, callback2, callback3, isOne) => {
+
+
     callback3(true)
     try {
         const response = await axios.post(localDevURL + "transcribe", {
@@ -593,6 +628,7 @@ function Homepage() {
         
   
     } catch (error) {
+
         console.error('Error:', error);
         callback3(false)
 
@@ -649,16 +685,26 @@ function Homepage() {
             
           <div className="upload2">
           </div>
-        <div className="container-fluid">
+        <button
+            onClick={() => setLegendOpen(true)}
+            className={`btn btn-square ${
+              "btn-outline-secondary"
+            }`}
+            style={{ width: "100%", marginBottom: "10px"}}
+          >
+            Show Legend
+          </button>
+        <div className="container-fluid" style={{width:"100%"}}>
           <div className="row no-gutters">
             <div className="card">
               <h3 className="card-header bg-white">Presets</h3>
               <div className="card-body">
-                <div className="btn-group" role="group" aria-label="Preset Buttons">
+                <div className="btn-group" role="group" aria-label="Preset Buttons"  style={{ display: "flex", justifyContent: "center" }} >
                   <button
                     className={`btn btn-square ${
                       presetNumber === 0 ? "btn-secondary" : "btn-outline-secondary"
                     }`}
+                    style={{ width: "50%", flex: 1,padding: "4px" }}
                     onClick={() => setPresetNumber(0)}
                   >
                     Dramatic
@@ -667,6 +713,7 @@ function Homepage() {
                     className={`btn btn-square ${
                       presetNumber === 1 ? "btn-secondary" : "btn-outline-secondary"
                     }`}
+                    style={{  width: "50%",flex: 1,padding: "8px" }}
                     onClick={() => setPresetNumber(1)}
                   >
                     Public
@@ -675,6 +722,7 @@ function Homepage() {
                     className={`btn btn-square ${
                       presetNumber === 2 ? "btn-secondary" : "btn-outline-secondary"
                     }`}
+                    style={{  width: "50%",flex: 1,padding: "6px" }}
                     onClick={() => setPresetNumber(2)}
                   >
                     Science
@@ -687,8 +735,14 @@ function Homepage() {
 
 
           <div className="row no-gutters">
-              <div className="card">
-                <h3 className="card-header bg-white">Controls</h3>
+            <div className="card">
+              <h3 className="card-header bg-white">Controls</h3>
+              <div className="form-check form-switch">
+                <Tooltip title="Video playback on click">
+                <input className="form-check-input" checked={videoPlaybackEnabled} onChange={toggleVideo} type="checkbox" id="videoSwitch" />
+                <label className="form-check-label" for="videoSwitch">Show Video Playback</label>
+                </Tooltip>
+              </div>
               <div className="form-check form-switch">
                 <Tooltip title="Only depicts pauses">
                 <input className="form-check-input" checked={pauseCheck} onChange={toggle} type="checkbox" id="pauseSwitch" />
@@ -701,12 +755,12 @@ function Homepage() {
                 <label className="form-check-label" for="caedenceSwitch">Cut off at Pauses</label>
                 </Tooltip>
               </div>
-              <div className="form-check form-switch">
+              {/* <div className="form-check form-switch">
                 <Tooltip title="Separates amplitude and pitch visualizations.">
                 <input className="form-check-input" checked={tiled} onChange={toggleTiled} type="checkbox" id="tiledSwitch" />
                 <label className="form-check-label" for="tiledSwitch">Tiled View</label>
                 </Tooltip>
-              </div>
+              </div> */}
               <div className="form-check form-switch">
                 <Tooltip title="Normalized pitch coloring between both audio clips.">
                 <input className="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
@@ -719,6 +773,7 @@ function Homepage() {
                 <label className="form-check-label" for="normalSwitch">View Word Density</label>
                 </Tooltip>
               </div>
+              <hr/>
               <label for="customRange3" id="pauseRange" className="form-label">Pause Length: 1.0 seconds</label>
               <input onChange={pauseSlide} type="range" className="form-range" min="0.2" max="2" step="0.1" value={pauseSlider} id="customRange3"></input>
               <hr/>
@@ -737,30 +792,59 @@ function Homepage() {
                 /> */}
               <label for="customRange5" id="timeRange" className="form-label">Each line represents 30 seconds of speaking</label>
               <input onChange={timeSlide} type="range" className="form-range" min="10" max="90" step="10" value={timeSlider} id="customRange5"></input>
-
-      </div>
-
-
-            <div className="card legend-card">
-              <h3 className="card-header bg-white">Legend</h3>
-            <div className="legend">
-              <Legend width={'calc(16vw - 30px)'} height={40} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
+              <hr/>
+              {/* <label htmlFor="amplitudeRange" id="amplitudeRange" className="form-label">
+                  Amplitude Scale: {amplitudeScale.toFixed(2)}
+                </label>
+                <input
+                  onChange={(e) => setAmplitudeScale(parseFloat(e.target.value))}
+                  type="range"
+                  className="form-range"
+                  min="0.5"
+                  max="3"
+                  step="0.1"
+                  value={amplitudeScale}
+                  id="amplitudeRange"
+                />
+              <hr/> */}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <b>Low Pitch</b>
-              <b>High Pitch</b>
-            </div>
-            <hr></hr>
-            Volume is represented with the width
-            <hr/>
-            Click on the graph to view the part of the audio/speech.<hr/>
-            </div>
+
+            
+
+            <Dialog
+              open={legendOpen}
+              onClose={() => setLegendOpen(false)}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>
+                Legend
+              </DialogTitle>
+              <DialogContent dividers>
+                <div className="legend">
+                  <Legend width={'100%'} height={40} pauseStatus={pauseCheck} normalizeStatus={normalCheck}/>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <b>Low Pitch</b>
+                  <b>High Pitch</b>
+                </div>
+                <hr />
+                Volume is shown by width.
+                <hr />
+                Click on the graph to view the audio component.
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setLegendOpen(false)} color="primary">
+                  Close
+                </Button>
+              </DialogActions>
+            </Dialog>
           </div>
         </div>
         
           </div>
           <div id="tooltip"></div>
-          <div className="rec1" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="rec1" style={{ width: '500px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Button
             component="label"
             role={undefined}
@@ -775,48 +859,40 @@ function Homepage() {
               />
           </Button> 
           <AudioRecorder onRecordingComplete={setBlob} recorderControls={recorder} />
-          <div>
+          {/* <div>
           {audioUrl && <audio controls style={{marginLeft: 'auto'}} className="player1" src={audioUrl} style={{transform: 'translateX(50%)',}}></audio>}
-          </div>
+          </div> */}
         
        
               
           </div>
           
-          <div className="url1">
+          <div className="url1" style={{ width: '500px', marginLeft: '180px' }}>
           
         
-        <IconButton aria-label="send">
+          <IconButton aria-label="send" sx={{ border: 'none',}}>
 
-        {(loading1)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"style={{}}/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
+          {(loading1)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"style={{}}/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
 
-        </IconButton>
-        
-        
-        </div>
+          </IconButton>
           
           
-          
-          <div className="title1">
-          Video Title: {videotitle1}
-          </div>
-        
-        
-          
-          <div className="title2">
-          Video Title: {videotitle2}
           </div>
           
-          <div className="url2">
+          <div className="url2" style={{ width: '100px', marginLeft: '0' }}>
+          
           <Select
             value={selectedUrl.url} // Use the `url` property of the selected option
             onChange={(e) => {
+              console.log("SELECTED NEW URL: " + e.target.value );
               const selectedOption = urlOptions[presetNumber].find(option => option.url === e.target.value);
               setSelectedUrl(selectedOption); // Update the selected option
-              setSpeaker2url(selectedOption.url); // Update speaker2url with the selected URL
+              setSpeaker2url(e.target.value); // Update speaker2url with the selected URL
+              handleVideoChange(0,e.target.value,false);
+              handleSend('rec2.wav',e.target.value,setData2,setVideoTitle2,setLoading2,false);
             }}
             size="small"
-            sx={{ marginLeft: 0, width: '300px' }} // Adjust width as needed
+            sx={{ marginLeft: '-80px',width:  '300px'}} // Adjust width as needed
           >
             {urlOptions[presetNumber].map((option, index) => (
               <MenuItem key={index} value={option.url}>
@@ -824,21 +900,7 @@ function Homepage() {
               </MenuItem>
             ))}
           </Select>
-          {/* <Tooltip title="Enter Youtube link">
-           <TextField
-          label="Speaker 2"
-          id="outlined-size-small"
-          value={speaker2url}
-          onChange={(e)=>setSpeaker2url(e.target.value)}
-          size="small"
-        /> 
-        </Tooltip> */}
-        
-        <IconButton aria-label="send" >
-
-        {(loading2)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec2.wav',speaker2url,setData2,setVideoTitle2,setLoading2,false)}/>}
-
-        </IconButton>
+          
         </div>
         <div className="col-lg-5 speaker1">
           {speaker1 && (
@@ -867,8 +929,10 @@ function Homepage() {
                 isOne={true}
                 dtwCallback={highlightDTWMatch}
                 dtwData={dtwData1}
+                amplitudeScale={amplitudeScale}
+                isLoading={loading1}
               />
-              <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} />
+              {/* <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} /> */}
             </>
           )}
         </div>
@@ -899,8 +963,10 @@ function Homepage() {
                 isOne={false}
                 dtwCallback={highlightDTWMatch}
                 dtwData={dtwData2}
+                amplitudeScale={amplitudeScale}
+                isLoading={loading2}
               />
-              <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} />
+              {/* <Ticks width={window.innerWidth / 2.6} timeSlider={timeSlider} /> */}
             </>
           )}
         </div>

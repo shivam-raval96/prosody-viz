@@ -6,7 +6,7 @@ import axios from "axios";
 const NumberContext = createContext();
   
 const localDevURL = "http://127.0.0.1:8000/";
-const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseStatus, normalizeStatus, tiledStatus, name, pauseSlider, speedSlider, timeSlider, videoID, wordDensityToggle, averageAmplitude, averageSpeed, averagePitch, phraseStart, phraseEnd,isOne,dtwCallback,dtwData}) => {
+const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseStatus, normalizeStatus, tiledStatus, name, pauseSlider, speedSlider, timeSlider, videoID, wordDensityToggle, averageAmplitude, averageSpeed, averagePitch, phraseStart, phraseEnd,isOne,dtwCallback,dtwData, amplitudeScale, isLoading}) => {
   const margin = {left: 0, top:200};
   console.log(audio)
   const [showVideo, setShowVideo] = useState(false);
@@ -18,6 +18,10 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
   
   const [dataOne, setDataOne] =useState({ minDistIndex:-1, phraseStart:-1, phraseEnd:-1, dists: -1 });
   const [dataTwo, setDataTwo] =useState({ minDistIndex:-1, phraseStart:-1, phraseEnd:-1, dists: -1 });
+
+  const [statsOpenOne, setStatsOpenOne] = useState(true); // New state for stats window
+  const [statsOpenTwo, setStatsOpenTwo] = useState(true); // New state for stats window
+
 
   const svgRef = useRef();
   const zoomRef = useRef();
@@ -70,7 +74,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
     var yScale = d3.scaleLinear()
       .domain(d3.extent(audio.amp))
-      .range([height/1.7, margin.top]);
+      .range([height/1.7*amplitudeScale, margin.top]);
 
     // Calculate the y position of the midpoint using the yScale
     const midpointY = yScale(midpointAmp);
@@ -98,21 +102,8 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
 
 
     let domain = [60, 150, 250];
-    // let domain = [13, 200, 400];
-    console.log('PITCH: ', audio.pitch)
-    // let domain = d3.extent(audio.pitch);
     if (normalizeStatus) {
-      // domain = [smallest, median - adj, largest + adj];
-      // domain = [meanPitch - 2 * stdDevPitch, meanPitch, meanPitch + 2 * stdDevPitch];
-      // domain = [0, 30, 158]
-      // domain = [minVarPitch, avgVarPitch, maxVarPitch];
-
-      // domain = [pitchMean - 2 * pitchStdDev, pitchMean, pitchMean + 2 * pitchStdDev];
-      // domain = [d3.min(audio.min_var_pitch), d3.min(audio.avg_var_pitch), d3.min(audio.max_var_pitch)]
       domain = [30, 70, 100];
-      // domain = [d3.min(audio.avg_var_pitch), (d3.min(audio.max_var_pitch) - d3.min(audio.avg_var_pitch))/2, d3.min(audio.max_var_pitch)]
-      // domain = [56, 146, 168];
-      console.log('NORM DOMAIN: ', domain);
     }
     // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRgb("#8B0000", "#d2b48c", "#5C4033")(1 - t))
     // .domain(domain);
@@ -127,9 +118,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     
       return colorScale(t); // Map t to the interpolated color
     });
-
-    // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
-    // .domain(domain);
 
     if (!normalizeStatus) {
       domain = [60, 150, 250];
@@ -160,7 +148,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     for (let i = 0; i < audio.time.length-1; i++) {
       if (caedenceStatus){
         if (audio.start[i+1] - audio.end[i] > pauseSlider) {
-          //console.log(audio.start[i+1] - audio.end[i])
           endings.push(i + 1);
         }
       }else{
@@ -184,6 +171,47 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       new_g.attr("transform", `translate(0,${separation*(j+1)})`);
       new_g.attr("id", name + "g" + j);
       
+      const linesGroup = new_g.insert("g", ":first-child");
+
+      // Compute the top and bottom for this row using your existing yScale range:
+      // Note: yScale.range() was defined as: [ height/1.7 * amplitudeScale, margin.top ]
+      const rowTop = margin.top; // smaller y: top
+      const rowBottom = (height / 1.7) * amplitudeScale; // larger y: bottom
+      const deltaY = rowBottom - rowTop;
+
+      // Define the five positions:
+      // The first (top) and fifth (bottom) represent the maximum amplitude.
+      // The third line is centered (0%) and the second and fourth are at 50% intervals.
+      const positions = [
+        rowTop,
+        rowTop + deltaY * 0.25,
+        rowTop + deltaY * 0.5,
+        rowTop + deltaY * 0.75,
+        rowBottom
+      ];
+      const labels = ["100%", "50%", "0%", "-50%", "-100%"];
+
+      let yOffset=20
+      // For each position, append a horizontal line and a text label at the left edge.
+      positions.forEach((yPos, i) => {
+        linesGroup.append("line")
+          .attr("x1", 0)
+          .attr("x2", width*2.32)  // spans the entire row width
+          .attr("y1", yPos+yOffset)
+          .attr("y2", yPos+yOffset)
+          .attr("stroke", "#555")
+          .attr("stroke-width", 1)
+          .attr("stroke-dasharray", "4,2");  // dashed line
+
+        linesGroup.append("text")
+          .attr("x", -25)  // slight padding from the left edge
+          .attr("y", yPos+yOffset) // adjust vertically, as needed
+          .attr("fill", "#555")
+          .attr("font-size", "10px")
+          .text(labels[i]);
+      });
+
+
       /*endIndex=endings[j];
       lastEnd=endings[j];
       startIndex=(j==0)?0:endings[j-1];*/
@@ -389,16 +417,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
           .y0(function (d) {
             return height/2 + pitchScale(d[2]);
           });
-
-          // if (!pauseStatus) {
-          //   new_g.append('line')
-          //   .attr('stroke', 'white')
-          //   .attr('stroke-width', 2)
-          //   .attr('x1', xScaleNew(audio.start[i]))
-          //   .attr('y1', height/2)
-          //   .attr('x2', xScaleNew(audio.end[i+1]))
-          //   .attr('y2', height/2);
-          // }
       
           //pauses
           if (audio.start[i+1] - audio.end[i] > pauseSlider) {
@@ -414,8 +432,6 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
             .attr('stroke', 'none')
             .attr('stroke-width', 5)
             .attr('fill', pauseStatus?'black':'gray');
-
-            
           }
           let fill, stroke;
           if (!pauseStatus) {
@@ -429,12 +445,13 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
             new_g.append('path')
               .attr('d', curveFunc(data))
               .attr('stroke', 'none')
-              .attr('stroke-width', function (d) {
+              .attr('stroke-width', function () {
                 return (audio.end[i] - audio.start[i]) * 10;
               })
               .attr('id', i) 
               .attr('data-word', audio.word[i])               
-              .attr('fill', fill ).on("mouseover", function(event, d) {
+              .attr('fill', fill )
+              .on("mouseover", function(event) {
                 let possible = (i - 5);
                 let startWord = possible >= 0 ? i - 5 : 0;
                 let text = [];
@@ -443,77 +460,74 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
                 }
                 let actualWord = audio.word[i];
                 mouseOver(event, j, name, hoverWidth, pauseStatus, text, actualWord,i,phraseStart,phraseEnd);
-              }).on('click', function (d) {
-                //dtw_comparison(i)
-                //setVideoTime(round(audio.start[i]-0.5))
-                //makePointer(videoTime, xScaleNew)
-                //videoHandler(round(audio.start[i]-0.5), videoID);
+              })
+              .on('click', function (d) {
+                videoHandler(round(audio.start[i]-0.5), videoID);
                 
                 let indice=return_phrase_index(i,phraseStart,phraseEnd);
                 dtwCallback(indice,isOne);
-              }).on("mouseout", function(d) {
+              })
+              .on("mouseout", function(d) {
                 mouseOut(j, name, hoverWidth, pauseStatus);
                 d3.select(this.parentNode).selectAll('.highlight-box').remove();
               });
-          }
 
-            // // mirror image of the top curve 
-            //console.log("data: "+data);
-            if(data!=null)
               new_g.append('path')
               .attr('d', curveFuncBottom(data))
               .attr('stroke', 'none')
-              .attr('stroke-width', function (d) {
-              return (audio.end[i] - audio.start[i]) * 10;
-            })
-            .attr('data-word', audio.word[i])  
-            .attr('fill', fill).on("mouseover", function(event, d) {
-              let possible = (i - 5);
-              let startWord = possible >= 0 ? i - 5 : 0;
-              let text = [];
-              for (let k = startWord; k < i + 5; k++) {
-                text.push(audio.word[k]);
-              }
-              let actualWord = audio.word[i];
-              mouseOver(event, j, name, hoverWidth, pauseStatus, text, actualWord,i,phraseStart,phraseEnd);
-            }).on("mouseout", function(d) {
-              mouseOut(j, name, hoverWidth, pauseStatus);
-              d3.select(this.parentNode).selectAll('.highlight-box').remove();
-            }).on('click', function (d) {
-              //dtw_comparison(i)
-              //setVideoTime(round(audio.start[i]-0.5))
-              //videoHandler(j*30, videoID);
-              let indice=return_phrase_index(i,phraseStart,phraseEnd);
-              dtwCallback(indice,isOne);
-            })
-            .attr('id', i);
-
-            // OUTLINES 
-            new_g.append('line')
-              .attr('stroke', "black")
-              .attr('stroke-width', 2)
-              .attr('pointer-events', 'none')
-              .attr('x1', function (d) {
-                return xScaleNew(data[0][0]);
+              .attr('stroke-width', function () {
+                return (audio.end[i] - audio.start[i]) * 10;
               })
-              .attr('class', "outline")
-              .attr('y1', yScale(data[0][1]) + pitchScale(audio.pitch[i]))
-              .attr('x2', xScaleNew(data[1][0]))
-              .attr('y2', yScale(data[1][1]) + pitchScale(audio.pitch[i+1]))
+              .attr('data-word', audio.word[i])
+              .attr('id', i)   
+              .attr('fill', fill)
+              .on("mouseover", function(event) {
+                let possible = (i - 5);
+                let startWord = possible >= 0 ? i - 5 : 0;
+                let text = [];
+                for (let k = startWord; k < i + 5; k++) {
+                  text.push(audio.word[k]);
+                }
+                let actualWord = audio.word[i];
+                mouseOver(event, j, name, hoverWidth, pauseStatus, text, actualWord,i,phraseStart,phraseEnd);
+              })
+              .on("mouseout", function(d) {
+                mouseOut(j, name, hoverWidth, pauseStatus);
+                d3.select(this.parentNode).selectAll('.highlight-box').remove();
+              })
+              .on('click', function (d) {
+                videoHandler(round(audio.start[i]-0.5), videoID);
+                let indice=return_phrase_index(i,phraseStart,phraseEnd);
+                dtwCallback(indice,isOne);
+              });
 
-            new_g.append('line')
-            .attr('stroke', "black")
-            .attr('stroke-width', 2)
-            .attr('pointer-events', 'none')
-            .attr('x1', function (d) {
-              return xScaleNew(data[0][0]);
-            })
-            .attr('pointer-events', 'none')
-            .attr('class', "outline")
-            .attr('y1', height - yScale(data[0][1]) + pitchScale(audio.pitch[i]))
-            .attr('x2', xScaleNew(data[1][0]))
-            .attr('y2', height - yScale(data[1][1]) + pitchScale(audio.pitch[i+1]))
 
+              // OUTLINES 
+              new_g.append('line')
+                .attr('stroke', "black")
+                .attr('stroke-width', 2)
+                .attr('pointer-events', 'none')
+                .attr('x1', function (d) {
+                  return xScaleNew(data[0][0]);
+                })
+                .attr('class', "outline")
+                .attr('y1', yScale(data[0][1]) + pitchScale(audio.pitch[i]))
+                .attr('x2', xScaleNew(data[1][0]))
+                .attr('y2', yScale(data[1][1]) + pitchScale(audio.pitch[i+1]))
+
+                new_g.append('line')
+                .attr('stroke', "black")
+                .attr('stroke-width', 2)
+                .attr('pointer-events', 'none')
+                .attr('x1', function (d) {
+                  return xScaleNew(data[0][0]);
+                })
+                .attr('pointer-events', 'none')
+                .attr('class', "outline")
+                .attr('y1', height - yScale(data[0][1]) + pitchScale(audio.pitch[i]))
+                .attr('x2', xScaleNew(data[1][0]))
+                .attr('y2', height - yScale(data[1][1]) + pitchScale(audio.pitch[i+1]))
+            }
             // Lines + Word Separation 
             if (wordDensityToggle) {
               new_g.append('line')
@@ -543,7 +557,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
             }
           }
           
-             //TEXT 
+             //Emphasized Text 
              let textFill;
              if (!pauseStatus) {
                textFill = 'black';
@@ -555,27 +569,20 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
               speed = (audio.end[i]-audio.start[i])/audio.word[i].length
              }
              if(speed>speedSlider[0] && speed<speedSlider[1]){
-            emphwordcount++
-            let xPos = xScaleNew(audio.start[i]);
-            let yPos = (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*6;
-             new_g.append('text')
-             .attr('x', xPos)
-             .attr('y', yPos)
-             // .attr('y', (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*(i%5))
-             // .attr('y', (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*3)
-             .attr('fill', textFill)
-             .attr('font-family', 'Arial')
-             .attr('font-size', '20px')         
-             .text(audio.word[i])
-             .attr('transform', `rotate(270 ${xPos}, ${yPos})`)}
+              emphwordcount++
+              let xPos = xScaleNew(audio.start[i]);
+              let yPos = (height - yScale(0) / 2) - (margin.top / 4) + (tiledStatus)*60+15*6;
 
-            /* 
-            new_g.append('text')
-            .attr('x', xScaleNew(audio.start[i]))
-            .attr('y', /* appropriate y value *//*)
-            .attr('data-word', audio.word[i]) // Set the data-word attribute
-            .text(audio.word[i]);
-          console.log("Added data-word: "+i+"-> "+audio.word[i]);*/
+              new_g.append('text')
+              .attr('x', xPos)
+              .attr('y', yPos)
+              .attr('fill', textFill)
+              .attr('font-family', 'Arial')
+              .attr('font-size', '20px')         
+              .text(audio.word[i])
+              .attr('transform', `rotate(270 ${xPos}, ${yPos})`)
+            }
+
       }
   }
       console.log(emphwordcount)
@@ -601,6 +608,32 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       return number > videoTime;
     });
     //console.log(videoTime, endings, index)
+    const uniqueId = isOne ? "1" : "2";
+    // Create an object with your stats data. (Make sure these variables are in scope.)
+    const statsData = { pausespm, wordspm, emphwords, averageSpeed, averageAmplitude, averagePitch, pitchrange, totalSpeechLength };
+    createStatsWindow(svg, uniqueId, statsData)
+
+    if (isLoading) {
+      // Remove any prior overlay
+      svg.selectAll(".loading-overlay").remove();
+
+      svg.append("foreignObject")
+        .attr("class", "loading-overlay")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", height)
+        .append("xhtml:div")
+        .style("width", "100%")
+        .style("height", "100%")
+        .style("background", "rgba(0, 0, 0, 0.5)")
+        .style("display", "flex")
+        .style("align-items", "center")
+        .style("justify-content", "center")
+        .html("<div style='color: white; font-size: 20px;'>Processing Audio...</div>");
+    } else {
+      svg.selectAll(".loading-overlay").remove();
+    }
 
 
   }, [audio, normalizeStatus, pauseSlider, speedSlider, timeSlider, caedenceStatus, pauseStatus, tiledStatus, width, height, showVideo, videoTime, wordDensityToggle]);
@@ -611,7 +644,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
     <div className="container">
       <svg ref={svgRef} height={height}></svg>
       
-      <div className="stats" style={{ width: width * 0.7, height: height*0.3, marginTop: height * 0.2 }}>
+      {/* <div className="stats" style={{ width: width * 0.7, height: height*0.3, marginTop: height * 0.2 }}>
         <h6><b>Speaker stats</b></h6>
         Pauses per minute: {pausespm}<br/>
         Words per minute: {wordspm}<br/>
@@ -621,12 +654,62 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
         Average pitch: {averagePitch.toFixed(3)} Hz<br/>
         Dynamic Pitch Range: {3*pitchrange} Hz <br/>
         Total Speech Length: {totalSpeechLength} secs
-      </div>
+      </div> */}
     </div>
     </>
   );
 };
 
+function createStatsWindow(svg, uniqueId, statsData) {
+  const { pausespm, wordspm, emphwords, averageSpeed, averageAmplitude, averagePitch, pitchrange, totalSpeechLength } = statsData;
+  const statsClass = `statsWindow-${uniqueId}`;
+
+  // Remove any existing "Show Stats" text for this uniqueId to avoid duplicates
+  d3.select(`#show-stats-${uniqueId}`).remove();
+
+  // Append the stats window via foreignObject
+  const statsFO = svg.append("foreignObject")
+    .attr("x", 10)
+    .attr("y", 10)
+    .attr("width", 300)
+    .attr("height", 150)
+    .attr("class", statsClass);
+
+  statsFO.append("xhtml:div")
+    .html(`
+      <div style="background: white; border: 1px solid #ccc; padding: 10px; font-size: 12px; position: relative;">
+        <button id="minimize-btn-${uniqueId}" style="position: absolute; top: 2px; right: 2px; border: none; background: transparent; cursor: pointer;">&#x2715;</button>
+        <h6><b>Speaker Stats</b></h6>
+        Pauses per minute: ${pausespm}<br/>
+        Words per minute: ${wordspm}<br/>
+        Average Speaking Speed: ${averageSpeed.toFixed(3)}<br/>
+        Average Amplitude: ${averageAmplitude.toFixed(3)}<br/>
+        Average Pitch: ${averagePitch.toFixed(3)} Hz<br/>
+        Dynamic Pitch Range: ${3 * pitchrange} Hz<br/>
+        Total Speech Length: ${totalSpeechLength} secs
+      </div>
+    `);
+
+  // Attach minimize event for this unique stats window
+  d3.select(`#minimize-btn-${uniqueId}`).on("click", function() {
+    statsFO.remove();
+    // Append a small clickable text.
+    svg.append("foreignObject")
+      .attr("x", 10)
+      .attr("y", 10)
+      .attr("width", 100)
+      .attr("height", 30)
+      .attr("id", `show-stats-${uniqueId}`)
+      .append("xhtml:button")
+      .style("font-size", "12px")
+      .style("cursor", "pointer")
+      .text("Show Stats")
+      .on("click", function() {
+          d3.select(`#show-stats-${uniqueId}`).remove();
+          createStatsWindow(svg, uniqueId, statsData);
+      });
+  });
+}
 function getTotalSpeechLength(audio) {
   // Check if audio.end exists and has at least one element
   if (audio && Array.isArray(audio.end) && audio.end.length > 0) {

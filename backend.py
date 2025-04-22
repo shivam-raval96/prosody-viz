@@ -77,7 +77,7 @@ timeIndex=[]
 processed_files_library = []  # Each item is [filename, processed_data_dict]
 
 # File to store processed_files_library
-PROCESSED_FILES_PATH = "processed_files_library.json"
+PROCESSED_FILES_PATH = "processed_files_library.pkl"
 
 # Load processed_files_library from file
 def load_processed_files_library():
@@ -100,6 +100,21 @@ def save_processed_files_library():
     except Exception as e:
         print(f"Error saving binary file: {e}")
 
+def load_video_from_title(title):
+    load_processed_files_library()
+
+    for saved_filename, saved_data in processed_files_library:
+        if saved_filename == title:
+            return (
+                saved_data["df_word"],
+                saved_data["avg_amp"],
+                saved_data["avg_pitch"],
+                saved_data["avg_speed"],
+                saved_data["phrase_start"],
+                saved_data["phrase_end"],
+                saved_data["matches"],
+            )
+    return None, None, None, None, None, None, None
 
 
 #MFCC functions
@@ -277,6 +292,30 @@ def download_audio_youtube(url, name):
 
     return None, None
 
+
+def grab_audio_youtube_no_download(url):
+    """
+    Grabs title data from from a YouTube video without downloading.
+
+    Parameters:
+        url (str): The URL of the YouTube video.
+    Returns:
+        tuple: The video title.
+    """
+    try:
+        logging.info(f"Attempting to gather audio data from: {url}")
+        
+        # Download audio using yt-dlp
+        with YoutubeDL() as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            title = info_dict.get('title', None)
+
+        return title
+
+    except Exception as e:
+        logging.exception(f"An error occurred while grabbing audio data: {e}")
+
+    return None
 
 @app.route("/get_window", methods=["POST"])
 #takes in timestamp and returns the start and end of the clause
@@ -483,22 +522,15 @@ def get_DTW_matches():
 
 #isData one is a bool: true for 1, false for 2
 def process_audio_data(filename,isDataOne, title):
-    load_processed_files_library()
+
+    # load_attempt = load_video_from_title(title)
+    # if (not (load_attempt[0] is None)): 
+    #     return load_attempt
     #Maybe adjust based on audio?
     MIN_SENTENCE_CONFIDENCE_THRESHOLD=0.4 #For sentence confidence
     MIN_WORD_CONFIDENCE_THRESHOLD=0.3 #For word confidence 
     # Add explanation for what is confidence TODO
-    for saved_filename, saved_data in processed_files_library:
-        if saved_filename == title:
-            return (
-                saved_data["df_word"],
-                saved_data["avg_amp"],
-                saved_data["avg_pitch"],
-                saved_data["avg_speed"],
-                saved_data["phrase_start"],
-                saved_data["phrase_end"],
-                saved_data["matches"],
-            )
+    
 
     audio=whisper.load_audio(filename)
     results=whisper.transcribe(model, audio, language="en")
@@ -820,14 +852,17 @@ def transcribe():
     isOne=args['isOne']
 
     print("https://www.youtube.com/watch?v="+str(url))
-    _, title = download_audio_youtube("https://www.youtube.com/watch?v="+url, filename)
+    title = grab_audio_youtube_no_download("https://www.youtube.com/watch?v="+str(url))
 
+    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = load_video_from_title(title)
 
+    if ((df_word is None) or (df_word['amplitude'] is None) or (avg_amp is None)):
+        
+        _, title = download_audio_youtube("https://www.youtube.com/watch?v="+str(url), filename)
 
-    
-    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne, title)
-    #df_word = pd.read_csv('kndebate.csv')#.drop(columns=['num1','num2','num3'])
-    ###FIX TO BRING BACK TITLE
+        df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne, title)
+        print("V1: ",df_word['amplitude'])
+    print("V2: ",df_word['amplitude'])
 
     # NEW
     amp_no_zero = list(filter(lambda x: x != 0, df_word['amplitude']))

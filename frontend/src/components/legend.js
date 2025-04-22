@@ -17,36 +17,14 @@ const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
         // Clear previous content
         svg.selectAll('*').remove();
 
-        let domain = [75, 90, 100];
-        if (normalizeStatus) {
-          domain = [75, 90, 100];
-          let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRgb("#5C4033", "#d36b6e")(t));
-        }
+        let domain = [60, 150, 250];
+        
+        let scaleAnomaly =  d3.scaleLinear() // TODO: Not sure why these colors match, they don't exist in curverenderer.js, but the colors which do exist there seem to be blue/red, not blue/orange.
+        .range(['#062f62', '#5f9bc8', '#dce4eb',
+        '#f9e9de', '#f2a98a', '#b32833']) 
+        .interpolate(d3.interpolateRgb)
+        .domain(domain);
 
-        let scaleAnomaly = d3.scaleDiverging()
-          .domain(domain)
-          .interpolator(d3.interpolateRgbBasis(["#d3d3d3", "#8b0000", "#ff69b4"]));
-
-    //     let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateSpectral(1 - t))
-    // .domain(domain);
-
-        // let scaleAnomaly = d3.scaleDiverging(t => d3.interpolateBrBG(1 - t))
-        // let scaleAnomaly =  d3.scaleLinear()
-        // .range(['#5b64ad', '#66bbaa','#d1eda6', '#f0f9aa',
-        // '#fed283', '#ef704a','#cd495b']) 
-        // .interpolate(d3.interpolateRgb)
-        // .domain(domain);
-        if (!normalizeStatus) {
-         scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
-        //  scaleAnomaly =  d3.scaleLinear()
-        //  .range(['#062f62', '#5f9bc8', '#dce4eb',
-        //  '#f9e9de', '#f2a98a', '#b32833']) 
-        //  .interpolate(d3.interpolateRgb)
-        //  .domain(domain);
-
-          
-
-        }
 
         if (pauseStatus) {
           scaleAnomaly =  d3.scaleLinear()
@@ -56,7 +34,6 @@ const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
         }
 
     
-            /// legend !! 
         //Append a defs (for definition) element to your SVG
         var defs = svg.append("defs");
 
@@ -71,7 +48,7 @@ const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
         .attr("x2", "95%")
         .attr("y2", "0%");
 
-            //Append multiple color stops by using D3's data/enter step
+        //Append multiple color stops by using D3's data/enter step
         linearGradient.selectAll("stop")
         .data( scaleAnomaly.range() )
         .enter().append("stop")
@@ -84,24 +61,6 @@ const Legend = ({width, height, pauseStatus, normalizeStatus}) => {
             .attr("height", height)
             .style("fill", "url(#linear-gradient)");
 
-        let legendAxisDomain = [0, 300];
-        if (!normalizeStatus) {
-        legendAxisDomain = [0, 300];
-        }
-        // // Add an axis to show the scale
-        // const axisScale = d3.scaleLinear()
-        // .range([0, 300])
-        // .domain(legendAxisDomain);
-
-        // const axisBottom = d3.axisRight(axisScale)
-        // .ticks();
-
-        // svg.append('g')
-        // .attr('class', 'axis axis--y')
-        // .attr('transform', `translate(20,${0})`)
-        // .call(axisBottom);
-
-        /// END LEGEND !!
     });
 
     return (
