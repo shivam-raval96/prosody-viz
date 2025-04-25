@@ -189,9 +189,9 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
         rowTop + deltaY * 0.75,
         rowBottom
       ];
-      const labels = ["100%", "50%", "0%", "-50%", "-100%"];
+      const labels = ["100%", "50%", "0%", "50%", "100%"];
 
-      let yOffset=20
+      let yOffset=56
       // For each position, append a horizontal line and a text label at the left edge.
       positions.forEach((yPos, i) => {
         linesGroup.append("line")
@@ -200,14 +200,14 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
           .attr("y1", yPos+yOffset)
           .attr("y2", yPos+yOffset)
           .attr("stroke","black")
-          .attr("stroke-width", 1)
-          .attr("stroke-dasharray", "4,2");  // dashed line
+          .attr("stroke-width", 1.5)
+          .attr("stroke-dasharray", "4,0");  // dashed line
 
         linesGroup.append("text")
-          .attr("x", -25)  // slight padding from the left edge
+          .attr("x", -50)  // slight padding from the left edge
           .attr("y", yPos+yOffset) // adjust vertically, as needed
           .attr("fill", "black")
-          .attr("font-size", "10px")
+          .attr("font-size", "20px")
           .text(labels[i]);
       });
 

@@ -159,6 +159,8 @@ function Homepage() {
     setVideoId(id);
     setShowVideo(doesShowVideo);
   };
+  const handleVideoChangeOne = (time, id, doesShowVideo = true) => {
+  };
 
   
   const highlightDTWMatch= (i, isOne)=>{
@@ -916,7 +918,7 @@ function Homepage() {
           {speaker1 && (
             <>
               <CurveRender
-                videoHandler={handleVideoChange}
+                videoHandler={handleVideoChangeOne}
                 wordDensityToggle={wordDensityCheck}
                 audio={speaker1}
                 width={window.innerWidth / 2}
