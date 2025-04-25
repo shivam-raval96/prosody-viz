@@ -534,7 +534,7 @@ def process_audio_data(filename,isDataOne, title):
 
     audio=whisper.load_audio(filename)
     results=whisper.transcribe(model, audio, language="en")
-    
+
     with open('muddledData.json','w') as f:
         json.dump(results,f,indent=2,ensure_ascii=True)
     #BASIC FEATURES (w/o transcription needed)
@@ -680,7 +680,8 @@ def process_audio_data(filename,isDataOne, title):
             #Check for clause ending
             hasPunctuation=False
             for sym in punctuation_symbols:
-                 if sym in df_word['Word'][i]:
+                 print("WORD TYPE: "+str(type(df_word['Word'][i]))+", "+str(df_word['Word'][i]))
+                 if (df_word['Word'][i] is str) and sym in df_word['Word'][i]:
                       hasPunctuation=True
                       break
             if hasPunctuation or df_word['post_space'][i]>MIN_CLAUSE_PAUSE_DURATION:
@@ -840,6 +841,7 @@ def home():
 # Performs selected dimensionality reduction method (reductionMethod) on uploaded data (data), considering selected parameters (perplexity, selectedCol)
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
+    print("TRANSCRIBE")
 
     parser = reqparse.RequestParser()
     parser.add_argument('url', type=str)
@@ -927,12 +929,15 @@ def transcribe():
             "phrase_matches": matches
         }
     #check_dataframes(response_data)
+    print("AUDIO DATAS: ",str(df_word.to_json(orient="split")))
 
     return jsonify(response_data)
 
 
 @app.route("/rec-transcribe", methods=["POST"])
 def rec_transcribe():
+    print("REC TRANSCRIBE")
+
     if 'file' not in request.files:
             print("NO FILE PART")
             return 'No file part', 400
@@ -956,7 +961,7 @@ def rec_transcribe():
     audio = audio.set_frame_rate(16000)  # Set the frame rate to 16000 Hz
     audio.export(filename, format="wav", codec="pcm_s16le")  # Export as 16-bit PCM WAV
 
-    df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,isOne )
+    df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,isOne, filename )
 
     # NEW
 
@@ -996,11 +1001,13 @@ def rec_transcribe():
         "phrase_matches": matches 
         
     }
-    
+    print("AUDIO DATAR: ",str(df_word.to_json(orient="split")))
+
     return jsonify(response_data)
 
 @app.route("/upload-transcribe", methods=["POST"])
 def upload_transcribe():
+    print("UPLOAD TRANSCRIBE")
     if 'file' not in request.files:
             print("NO FILE PART")
             return 'No file part', 400
@@ -1027,19 +1034,80 @@ def upload_transcribe():
 
     df_word, avg_amp, avg_pitch,avg_speed,phrase_start,phrase_end,matches = process_audio_data(filename,bool(isOne),filename)
     df_word.to_csv('TranscribedAudio3.csv',index=False)
+    amp_no_zero = list(filter(lambda x: x != 0, df_word['amplitude']))
+    amp_mean = sum(amp_no_zero) / len(amp_no_zero)
+    var_amp = [(el-amp_mean)**2 for el in amp_no_zero]
+    df_word['var_amplitude'] = var_amp
 
-    print("SUCCESS")
-    print(str(type(df_word.to_json(orient="split")))+ " : "+str(type(avg_amp))+ " : "+str(type(avg_pitch))+ " : "+str(type(avg_speed))+ " : "+str(type(phrase_start))+ " : "+str(type(phrase_end))+ " : "+str(type(matches)))
-    response_data = {
-        "data": df_word.to_json(orient="split"),
-        "title": file.filename,
-        "average_amplitude": float(avg_amp) if isinstance(avg_amp, np.generic) else avg_amp,
-        "average_pitch": float(avg_pitch) if isinstance(avg_pitch, np.generic) else avg_pitch,
-        "average_speed": float(avg_speed) if isinstance(avg_speed, np.generic) else avg_speed,
-        "phrase_start": [int(x) for x in phrase_start],
-        "phrase_end": [int(x) for x in phrase_end],
-        "phrase_matches": matches
-    }
+    # any pitch that is <50 or >300, mark as NaN
+    df_word['pitch'] = [el if (el > 50 and el < 300) else np.nan for el in df_word['pitch']]
+        
+    # if rec1
+    if isOne:
+        df_word.to_csv('TranscribedAudio1.csv',index=False)
+    else:
+        df_word.to_csv('TranscribedAudio2.csv',index=False)
+    
+
+    # calculate var pitch only for rec2
+    df_word1 = pd.read_csv('TranscribedAudio1.csv')
+    df_word2 = pd.read_csv('TranscribedAudio2.csv')
+    pitch_no_zero = list(filter(lambda x: x != 0 and not np.isnan(x), df_word2['pitch']))
+    pitch_mean = sum(pitch_no_zero) / len(pitch_no_zero)
+    var_pitch = [(el-pitch_mean)**2/len(pitch_no_zero) for el in pitch_no_zero]
+    min_var_pitch = min(var_pitch)
+    max_var_pitch = max(var_pitch)
+    avg_var_pitch = sum(var_pitch) / len(var_pitch)
+
+    df_word1['min_var_pitch'] = min_var_pitch
+    df_word1['avg_var_pitch'] = avg_var_pitch
+    df_word1['max_var_pitch'] = max_var_pitch
+    df_word1.to_csv('TranscribedAudio1.csv', index=False)
+
+    df_word2['min_var_pitch'] = min_var_pitch
+    df_word2['avg_var_pitch'] = avg_var_pitch
+    df_word2['max_var_pitch'] = max_var_pitch
+    df_word2.to_csv('TranscribedAudio2.csv', index=False)
+
+
+
+
+
+    if isOne:
+        response_data = {
+            "data": json.loads(df_word1.to_json(orient="split")),
+            "title": filename,
+            "average_amplitude": avg_amp,
+            "average_pitch": avg_pitch,
+            "average_speed": avg_speed,
+            "phrase_start":  phrase_start,
+            "phrase_end": phrase_end,
+            "phrase_matches": matches
+        }
+    else:
+        response_data = {
+            "data": json.loads(df_word2.to_json(orient="split")),
+            "title": filename,
+            "average_amplitude": avg_amp,
+            "average_pitch": avg_pitch,
+            "average_speed": avg_speed,
+            "phrase_start": phrase_start,
+            "phrase_end":  phrase_end,
+            "phrase_matches": matches
+        }
+    # print("SUCCESS")
+    # print(str(type(df_word.to_json(orient="split")))+ " : "+str(type(avg_amp))+ " : "+str(type(avg_pitch))+ " : "+str(type(avg_speed))+ " : "+str(type(phrase_start))+ " : "+str(type(phrase_end))+ " : "+str(type(matches)))
+    # response_data = {
+    #     "data": df_word.to_json(orient="split"),
+    #     "title": file.filename,
+    #     "average_amplitude": float(avg_amp) if isinstance(avg_amp, np.generic) else avg_amp,
+    #     "average_pitch": float(avg_pitch) if isinstance(avg_pitch, np.generic) else avg_pitch,
+    #     "average_speed": float(avg_speed) if isinstance(avg_speed, np.generic) else avg_speed,
+    #     "phrase_start": [int(x) for x in phrase_start],
+    #     "phrase_end": [int(x) for x in phrase_end],
+    #     "phrase_matches": matches
+    # }
+    print("AUDIO DATAT: ",str(df_word.to_json(orient="split")))
 
     
     return jsonify(response_data)

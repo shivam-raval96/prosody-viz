@@ -199,14 +199,14 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
           .attr("x2", width*2.32)  // spans the entire row width
           .attr("y1", yPos+yOffset)
           .attr("y2", yPos+yOffset)
-          .attr("stroke", "#555")
+          .attr("stroke","black")
           .attr("stroke-width", 1)
           .attr("stroke-dasharray", "4,2");  // dashed line
 
         linesGroup.append("text")
           .attr("x", -25)  // slight padding from the left edge
           .attr("y", yPos+yOffset) // adjust vertically, as needed
-          .attr("fill", "#555")
+          .attr("fill", "black")
           .attr("font-size", "10px")
           .text(labels[i]);
       });
@@ -671,7 +671,7 @@ function createStatsWindow(svg, uniqueId, statsData) {
   const statsFO = svg.append("foreignObject")
     .attr("x", 10)
     .attr("y", 10)
-    .attr("width", 300)
+    .attr("width", 200)
     .attr("height", 150)
     .attr("class", statsClass);
 

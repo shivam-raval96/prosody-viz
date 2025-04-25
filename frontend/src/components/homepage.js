@@ -254,7 +254,7 @@ function Homepage() {
       });
       console.log("Upload Received");
       console.log("TITLE: "+response.data.title);
-      const loadedData=JSON.parse(response.data.data);
+      const loadedData=response.data.data;
       //console.log("LD: "+loadedData);
       const title=response.data.title;
       
@@ -755,12 +755,12 @@ function Homepage() {
                 <label className="form-check-label" for="caedenceSwitch">Cut off at Pauses</label>
                 </Tooltip>
               </div>
-              {/* <div className="form-check form-switch">
+              <div className="form-check form-switch">
                 <Tooltip title="Separates amplitude and pitch visualizations.">
                 <input className="form-check-input" checked={tiled} onChange={toggleTiled} type="checkbox" id="tiledSwitch" />
                 <label className="form-check-label" for="tiledSwitch">Tiled View</label>
                 </Tooltip>
-              </div> */}
+              </div>
               <div className="form-check form-switch">
                 <Tooltip title="Normalized pitch coloring between both audio clips.">
                 <input className="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
@@ -858,7 +858,17 @@ function Homepage() {
               onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1,true)}
               />
           </Button> 
-          <AudioRecorder onRecordingComplete={setBlob} recorderControls={recorder} />
+          <AudioRecorder
+            onRecordingComplete={(audioBlob) => {
+              // Simulate upload similar to handleUpload
+              sendAudioToTranscribe(audioBlob, 'rec1.wav', setData, setVideoTitle1, setLoading1, true);
+              const newAudioUrl = URL.createObjectURL(audioBlob);
+              setAudioUrl(newAudioUrl);
+              setSpeaker1url("Enter YouTube link");
+              setVideoTitle1("Audio Recording");
+            }}
+            recorderControls={recorder}
+          />
           {/* <div>
           {audioUrl && <audio controls style={{marginLeft: 'auto'}} className="player1" src={audioUrl} style={{transform: 'translateX(50%)',}}></audio>}
           </div> */}
@@ -970,28 +980,34 @@ function Homepage() {
             </>
           )}
         </div>
-
-
-
-        </div>
-      </div>
-      {showVideo && videoId && (
+        {showVideo && videoId && (
         <div className="videoPlayerContainer">
+        <button 
+          onClick={() => setShowVideo(false)} 
+          className="btn dismiss-button" style={{
+          zIndex: 2
+        }}>
+          Dismiss
+        </button>
         <iframe
           id="ytplayer"
           type="text/html"
           width="250"
-          height="250"
+          height="200"
           // &start=${videoTime}
           src={`https://www.youtube.com/embed/${videoId}?autoplay=1&start=${videoTime}`}
-          frameBorder="0"
           className="videoPlayer"
+          style={{ zIndex: 1 }}
         ></iframe>
-        <button onClick={() => setShowVideo(false)} className="btn dismiss-button">
-          Dismiss
-        </button>
+        
         </div>
-    )}
+        )}
+
+
+        </div>
+        
+      </div>
+      
     </>
   );
 }
