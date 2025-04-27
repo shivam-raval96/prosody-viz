@@ -179,7 +179,41 @@ def amplitude_envelope(signal, frame_size, hop_length):
 
     return np.array(amplitude_envelope)
 
+def save_comparison_data (amp,pitch,speed,phraseStart,phraseEnd, isOne):
+    global phraseStart1, phraseEnd1, phraseStart2, phraseEnd2, savedComparisonData1, savedComparisonData2
+    avg_amp=np.nanmean(amp)
+    avg_pitch=np.nanmean(pitch)
+    avg_speed=np.nanmean(speed)
 
+    if(isOne):
+         
+         savedComparisonData1=pd.DataFrame(columns=['Amp', 'Pitch', 'Speed'])
+         print("Length of ynew:", len(amp))
+         print("DataFrame size:", len(savedComparisonData1))
+         print("ynewp: "+str(pitch))
+         savedComparisonData1['Amp']=[p/(avg_amp) for p in amp]
+         savedComparisonData1['Pitch']=[p/(avg_pitch) for p in pitch]
+         savedComparisonData1['Speed']=[p/avg_speed for p in speed]
+         
+         phraseStart1=phraseStart
+         phraseEnd1=phraseEnd
+         savedComparisonData1.to_csv('ComparisonData1.csv',index=False)
+         print(savedComparisonData1)
+    else:
+         
+         savedComparisonData2=pd.DataFrame(columns=['Amp', 'Pitch', 'Speed'])
+         print("Length of ynew:", len(amp))
+         print("DataFrame size:", len(savedComparisonData2))
+         
+         print("ynewp: "+str(pitch))
+         savedComparisonData2['Amp']=[p/(avg_amp) for p in amp]
+         savedComparisonData2['Pitch']=[p/(avg_pitch) for p in pitch]
+         savedComparisonData2['Speed']=[p/avg_speed for p in speed]
+         savedComparisonData2.to_csv('ComparisonData2.csv',index=False)
+
+         phraseStart2=phraseStart
+         phraseEnd2=phraseEnd
+         print(savedComparisonData2)
 
 
 # def download_audio_youtube(url, name):
@@ -795,20 +829,6 @@ def process_audio_data(filename,isDataOne, title):
         except Exception as e:
             print(f"Error handling response: {e}")
     print("Matches: ",matches)
-    """response = CalculateWindowDTW(phraseStart[i], phraseEnd[i + 1], isDataOne)
-        
-        if response.status_code == 200:
-            try:
-                result = response.get_json()  # Use get_json() for Flask Response objects
-                if 'minDistIndex' in result:
-                    matches.append(result['minDistIndex'])
-                else:
-                    print(f"Key 'minDistIndex' not found in result: {result}")
-            except ValueError as e:
-                print(f"Error parsing JSON: {e}")
-        else:
-            print(f"Request failed with status code: {response.status_code}")
-        """
     
     processed_data = {
         "df_word": df_word,
@@ -865,6 +885,8 @@ def transcribe():
         df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = process_audio_data(filename,isOne, title)
         print("V1: ",df_word['amplitude'])
     print("V2: ",df_word['amplitude'])
+
+    save_comparison_data(df_word['amplitude'],df_word['pitch'],df_word['speed'],phrase_start,phrase_end,isOne)
 
     # NEW
     amp_no_zero = list(filter(lambda x: x != 0, df_word['amplitude']))

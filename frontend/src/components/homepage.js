@@ -764,7 +764,7 @@ function Homepage() {
                 </Tooltip>
               </div>
               <div className="form-check form-switch">
-                <Tooltip title="Normalized pitch coloring between both audio clips.">
+                <Tooltip title="Normalized pitch coloring for individual audio clips.">
                 <input className="form-check-input" checked={normalCheck} onChange={normalToggle} type="checkbox" id="normalSwitch" />
                 <label className="form-check-label" for="normalSwitch">Normalize</label>
                 </Tooltip>

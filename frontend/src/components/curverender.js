@@ -119,11 +119,15 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       return colorScale(t); // Map t to the interpolated color
     });
 
-    if (!normalizeStatus) {
-      domain = [60, 150, 250];
-      scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
-      .domain(domain);
-    }
+    const [lo, hi] = d3.extent(audio.pitch);          // fast min-&-max in one pass :contentReference[oaicite:0]{index=0}
+    const mid      = (lo + hi) / 2;                   // neutral white
+
+    scaleAnomaly = d3.scaleDiverging(t => d3.interpolateRdBu(1 - t))
+                    .domain(
+                      normalizeStatus
+                        ? [lo, mid, hi]             // normalised diverging domain
+                        : [60, 150, 250]            // original fixed domain
+                    );
 
     let pitchScale = d3.scaleLinear()
     .domain([d3.min(audio.pitch), d3.max(audio.pitch)])
@@ -191,7 +195,7 @@ const AreaPlot = ({ videoHandler, audio, width, height, caedenceStatus, pauseSta
       ];
       const labels = ["100%", "50%", "0%", "50%", "100%"];
 
-      let yOffset=56
+      let yOffset=21
       // For each position, append a horizontal line and a text label at the left edge.
       positions.forEach((yPos, i) => {
         linesGroup.append("line")
