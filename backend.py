@@ -100,11 +100,28 @@ def save_processed_files_library():
     except Exception as e:
         print(f"Error saving binary file: {e}")
 
-def load_video_from_title(title):
+def load_video_from_title(title,isOne):
     load_processed_files_library()
-
+    global savedComparisonData1, savedComparisonData2
     for saved_filename, saved_data in processed_files_library:
         if saved_filename == title:
+            if (isOne):
+                savedComparisonData1 = saved_data["df_word"]
+            else:
+                savedComparisonData2 = saved_data["df_word"]
+            matches = []
+            for i in range(len(saved_data["phrase_start"]) - 1):
+                response = CalculateWindowDTW(saved_data["phrase_start"][i], saved_data["phrase_end"][i + 1], isOne)
+
+                try:
+                    result = response.get_json()  # This method directly gets the JSON content from the Flask response
+                    if 'dists' in result:
+                        matches.append(result['dists'])
+                    else:
+                        print(f"Key 'dists' not found in result: {result}")
+                except Exception as e:
+                    print(f"Error handling response: {e}")
+
             return (
                 saved_data["df_word"],
                 saved_data["avg_amp"],
@@ -112,13 +129,15 @@ def load_video_from_title(title):
                 saved_data["avg_speed"],
                 saved_data["phrase_start"],
                 saved_data["phrase_end"],
-                saved_data["matches"],
+                matches,
             )
     return None, None, None, None, None, None, None
 
 
 #MFCC functions
 def pre_emphasis(signal, pre_emphasis_coefficient=0.97):
+    # Ensure the signal is a numeric array (float)
+    signal = np.asarray(signal, dtype=float)
     return np.append(signal[0], signal[1:] - pre_emphasis_coefficient * signal[:-1])
 def framing(signal, frame_size, frame_stride, sample_rate):
     frame_length, frame_step = frame_size * sample_rate, frame_stride * sample_rate
@@ -404,25 +423,54 @@ def CalculateWindowDTW(startTime, endTime, isOne):
     print("ETI2: "+str(endTimeIndex2))
     print("ST: "+str(startTime))
     print("ET: "+str(endTime))
-    if(startTime==None or endTime==None):
+    if startTime is None or endTime is None:
         print("MissingDTW")
         result = {
             "minDistIndex": -1,
             "isOne": isOne,
             "phraseStart": -1,
             "phraseEnd": -1,
-            "dists": []  # Convert numpy array to list for JSON serialization
+            "dists": []
         }    
         return jsonify(result)
-    windowData=(
+    if savedComparisonData1 is None or savedComparisonData2 is None:
+        result = {
+            "minDistIndex": -1,
+            "isOne": isOne,
+            "phraseStart": startTime,
+            "phraseEnd": endTime,
+            "dists": []
+        }
+        return jsonify(result)
+
+    start_idx = int(startTime)
+    end_idx = int(endTime)
+
+    # Retrieve the appropriate index lists.
+    start_index_list = startTimeIndex1 if isOne else startTimeIndex2
+    end_index_list = endTimeIndex1 if isOne else endTimeIndex2
+
+    # Validate the indices to prevent out-of-range errors.
+    if start_idx < 0 or start_idx >= len(start_index_list) or  end_idx < 0 or end_idx >= len(end_index_list):
+        print("Index out of range in DTW calculation")
+        result = {
+            "minDistIndex": -1,
+            "isOne": isOne,
+            "phraseStart": startTime,
+            "phraseEnd": endTime,
+            "dists": []
+        }
+        return jsonify(result)
+
+    # Now use the indices safely.
+    windowData = (
         (savedComparisonData1 if isOne else savedComparisonData2)
-        [(startTimeIndex1 if isOne else startTimeIndex2)[startTime]:
-         (endTimeIndex1 if isOne else endTimeIndex2)[endTime]]
+        [ start_index_list[start_idx] : end_index_list[end_idx] ]
     )
-    #MFCC calculation for reference sample
     
-    print("WD shape: "+str(windowData.shape))
-    emphasized_signal1 = pre_emphasis(windowData.iloc[:,0].to_numpy())
+    print("WD shape: " + str(windowData.shape))
+    emphasized_signal1 = pre_emphasis(windowData.iloc[:, 0].to_numpy())
+    
     
     print("ES shape: "+str(emphasized_signal1.shape))
     # Framing
@@ -531,13 +579,14 @@ def get_DTW_matches():
     
     phraseStart=phraseStart1 if (isOne) else phraseStart2
     phraseEnd=phraseEnd1 if (isOne) else phraseEnd2
+
     for i in range(len(phraseStart) - 1):
         response = CalculateWindowDTW(phraseStart[i], phraseEnd[i + 1], isOne)
 
         try:
             result = response.get_json()  # This method directly gets the JSON content from the Flask response
             if 'dists' in result:
-                matches.append(result['dists'])
+                matches.append(result['minDistIndex'])
             else:
                 print(f"Key 'dists' not found in result: {result}")
         except Exception as e:
@@ -767,7 +816,6 @@ def process_audio_data(filename,isDataOne, title):
     print("isOne: "+str(isDataOne))
     global phraseStart1, phraseEnd1, phraseStart2, phraseEnd2, savedComparisonData1, savedComparisonData2
     if(isDataOne):
-         
          savedComparisonData1=pd.DataFrame(columns=['Amp', 'Pitch', 'Speed'])
          print("Length of ynew:", len(ynew))
          print("DataFrame size:", len(savedComparisonData1))
@@ -876,7 +924,7 @@ def transcribe():
     print("https://www.youtube.com/watch?v="+str(url))
     title = grab_audio_youtube_no_download("https://www.youtube.com/watch?v="+str(url))
 
-    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = load_video_from_title(title)
+    df_word, avg_amp, avg_pitch, avg_speed, phrase_start, phrase_end, matches = load_video_from_title(title,isOne)
 
     if ((df_word is None) or (df_word['amplitude'] is None) or (avg_amp is None)):
         

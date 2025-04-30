@@ -306,7 +306,7 @@ function Homepage() {
         setPhraseStart1(phraseStart);
         setPhraseEnd1(phraseEnd);
         
-        console.log("PMO: "+matches);
+        console.log("PMO1: "+matches);
         setPhraseMatches1(matches);
       }
       else{
@@ -316,7 +316,7 @@ function Homepage() {
         setPhraseStart2(phraseStart);
         setPhraseEnd2(phraseEnd);
         
-        console.log("PMO: "+matches);
+        console.log("PMO2: "+matches);
         
         setPhraseMatches2(matches);
         /*
@@ -339,21 +339,36 @@ function Homepage() {
         
         const matchFormData = new FormData();
         matchFormData.append("isOne",((!isOne)?"1":"0"));
-        const response = await axios.post(localDevURL + "get_DTW_matches", {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-        });
+        const response = await axios.post(localDevURL + "get_DTW_matches", matchFormData);
         
         console.log("SOMETHING IS HAPPENING");
         //const loadedData=JSON.parse(response.data.data);
         const matches=response.data.phrase_matches;
         console.log("MATCHES: "+matches);
         if(!isOne){
+          console.log("PMO1: "+matches);
+
           setPhraseMatches1(matches);
         }
         else{
+          console.log("PMO2: "+matches);
           setPhraseMatches2(matches);
+        }
+        try {
+          const matchFormData = new FormData();
+          // For the current perspective, this call returns matches for the current side:
+          matchFormData.append("isOne", (!isOne) ? "1" : "0");
+          const response = await axios.post(localDevURL + "get_DTW_matches", matchFormData);
+          const matches = response.data.phrase_matches;
+          if (!isOne) {
+            console.log("PMO1: " + matches);
+            setPhraseMatches1(matches);
+          } else {
+            console.log("PMO2: " + matches);
+            setPhraseMatches2(matches);
+          }
+        } catch (error) {
+          console.error('Error fetching DTW matches (current perspective):', error);
         }
       }
       catch (error) {
@@ -472,6 +487,7 @@ function Homepage() {
           setAverageSpeed1(roundToThreeSignificantDigits(averageSpeed));
           setPhraseStart1(phraseStart);
           setPhraseEnd1(phraseEnd);
+          console.log("PMO1: "+matches);
           setPhraseMatches1(matches);
 
         }
@@ -485,7 +501,8 @@ function Homepage() {
           for(let i=0;i<matches.length;i++){
             temp[matches[i]]=i;
           }*/
-          
+            console.log("PMO2: "+matches);
+
           setPhraseMatches2(matches);
         }
         audio.amp = movingAverage(audio.amp, 10);
@@ -493,6 +510,22 @@ function Homepage() {
         callback(audio)
         callback2(title)
         callback3(false)
+        try {
+          const matchFormData = new FormData();
+          // For the current perspective, this call returns matches for the current side:
+          matchFormData.append("isOne", (!isOne) ? "1" : "0");
+          const response = await axios.post(localDevURL + "get_DTW_matches", matchFormData);
+          const matches = response.data.phrase_matches;
+          if (!isOne) {
+            console.log("PMO1: " + matches);
+            setPhraseMatches1(matches);
+          } else {
+            console.log("PMO2: " + matches);
+            setPhraseMatches2(matches);
+          }
+        } catch (error) {
+          console.error('Error fetching DTW matches (current perspective):', error);
+        }
     } catch (error) {
         console.error('Error:', error);
         callback3(false);
@@ -557,6 +590,8 @@ function Homepage() {
           setAverageSpeed1(roundToThreeSignificantDigits(averageSpeed));
           setPhraseStart1(phraseStart);
           setPhraseEnd1(phraseEnd);
+          console.log("PMO1: "+matches);
+
           setPhraseMatches1(matches);
 
         }
@@ -570,6 +605,8 @@ function Homepage() {
           for(let i=0;i<matches.length;i++){
             temp[matches[i]]=i;
           }*/
+          console.log("PMO2: "+matches);
+
           setPhraseMatches2(matches);
         }
         audio.amp = movingAverage(audio.amp, 10);
@@ -579,22 +616,20 @@ function Homepage() {
         callback3(false)
 
         try {
-          const response = await axios.post(localDevURL + "get_DTW_matches", {
-            isOne: !isOne
-          });
-          
-          console.log("SOMETHING IS HAPPENING");
-          const loadedData=JSON.parse(response.data.data);
-          const matches=response.data.phrase_matches;
-          if(!isOne){
+          const matchFormData = new FormData();
+          // For the current perspective, this call returns matches for the current side:
+          matchFormData.append("isOne", (!isOne) ? "1" : "0");
+          const response = await axios.post(localDevURL + "get_DTW_matches", matchFormData);
+          const matches = response.data.phrase_matches;
+          if (!isOne) {
+            console.log("PMO1: " + matches);
             setPhraseMatches1(matches);
-          }
-          else{
+          } else {
+            console.log("PMO2: " + matches);
             setPhraseMatches2(matches);
           }
-        }
-        catch (error) {
-          console.error('Error:', error);
+        } catch (error) {
+          console.error('Error fetching DTW matches (current perspective):', error);
         }
         /*}).then((response) => {
           let loadedData = response.data.data
@@ -844,42 +879,36 @@ function Homepage() {
           </div>
         </div>
         
-          </div>
-          <div id="tooltip"></div>
-          <div className="rec1" style={{ width: '500px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Button
-            component="label"
-            role={undefined}
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<CloudUploadIcon sx={{ border: 'none',}}/>}
-            >
-            Upload file   
-              <VisuallyHiddenInput type="file" 
-              accept=".wav,video/mp4/mp3"
-              onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1,true)}
-              />
-          </Button> 
-          <AudioRecorder
-            onRecordingComplete={(audioBlob) => {
-              // Simulate upload similar to handleUpload
-              sendAudioToTranscribe(audioBlob, 'rec1.wav', setData, setVideoTitle1, setLoading1, true);
-              const newAudioUrl = URL.createObjectURL(audioBlob);
-              setAudioUrl(newAudioUrl);
-              setSpeaker1url("Enter YouTube link");
-              setVideoTitle1("Audio Recording");
-            }}
-            recorderControls={recorder}
-          />
-          {/* <div>
-          {audioUrl && <audio controls style={{marginLeft: 'auto'}} className="player1" src={audioUrl} style={{transform: 'translateX(50%)',}}></audio>}
-          </div> */}
-        
-       
-              
-          </div>
-          
-          <div className="url1" style={{ width: '500px', marginLeft: '180px' }}>
+        </div>
+        <div id="tooltip"></div>
+          <div className="rec1" style={{ width: '700px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Button
+              component="label"
+              role={undefined}
+              variant="contained"
+              tabIndex={-1}
+              startIcon={<CloudUploadIcon sx={{ border: 'none',}}/>}
+              >
+              Upload file   
+                <VisuallyHiddenInput type="file" 
+                accept=".wav,video/mp4/mp3"
+                onChange={(event) => handleUpload(event,setData,setVideoTitle1,setLoading1,true)}
+                />
+            </Button> 
+            <AudioRecorder
+              onRecordingComplete={(audioBlob) => {
+                // Simulate upload similar to handleUpload
+                sendAudioToTranscribe(audioBlob, 'rec1.wav', setData, setVideoTitle1, setLoading1, true);
+                const newAudioUrl = URL.createObjectURL(audioBlob);
+                setAudioUrl(newAudioUrl);
+                setSpeaker1url("Enter YouTube link");
+                setVideoTitle1("Audio Recording");
+              }}
+              recorderControls={recorder}
+            />
+            {/* <div>
+            {audioUrl && <audio controls style={{marginLeft: 'auto'}} className="player1" src={audioUrl} style={{transform: 'translateX(50%)',}}></audio>}
+            </div> */}
           
         
           <IconButton aria-label="send" sx={{ border: 'none',}}>
@@ -887,11 +916,10 @@ function Homepage() {
           {(loading1)?<CircularProgress sx={{ border: 'none',}} size="1.5rem"  color="inherit"style={{}}/>:<SendIcon sx={{ border: 'none',}} onClick={()=>handleSend('rec1.wav',speaker1url,setData,setVideoTitle1,setLoading1,true)}/>}
 
           </IconButton>
-          
-          
           </div>
           
-          <div className="url2" style={{ width: '100px', marginLeft: '0' }}>
+          
+        <div className="url2" style={{ width: '300px', marginLeft: '-60px'}}>
           
           <Select
             value={selectedUrl.url} // Use the `url` property of the selected option
@@ -904,7 +932,7 @@ function Homepage() {
               handleSend('rec2.wav',e.target.value,setData2,setVideoTitle2,setLoading2,false);
             }}
             size="small"
-            sx={{ marginLeft: '-80px',width:  '300px'}} // Adjust width as needed
+            sx={{width:  '300px', float: 'right' }} // Adjust width as needed
           >
             {urlOptions[presetNumber].map((option, index) => (
               <MenuItem key={index} value={option.url}>
