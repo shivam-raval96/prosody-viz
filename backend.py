@@ -11,6 +11,13 @@ import ssl
 import os
 import logging
 
+import warnings
+warnings.filterwarnings("ignore")
+
+# Set environment variables for production
+os.environ.setdefault('TRANSFORMERS_CACHE', '/tmp/transformers_cache')
+os.environ.setdefault('TORCH_HOME', '/tmp/torch_cache')
+
 
 # import urllib
 # import pdb
@@ -1185,4 +1192,5 @@ def upload_transcribe():
 
 # Run app in debug mode
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(debug=False, host="0.0.0.0", port=port)
