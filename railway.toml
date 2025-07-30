@@ -1,0 +1,7 @@
+[build]
+buildCommand = "pip install --upgrade pip && pip install -r requirements.txt"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "never"

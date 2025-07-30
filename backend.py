@@ -44,6 +44,14 @@ else:
 
 import sys
 
+# Add this near the top after imports
+import warnings
+warnings.filterwarnings("ignore")
+
+# Set environment variables for production
+os.environ.setdefault('TRANSFORMERS_CACHE', '/tmp/transformers_cache')
+os.environ.setdefault('TORCH_HOME', '/tmp/torch_cache')
+
 np.set_printoptions(threshold=sys.maxsize)
 
 model=whisper.load_model("medium")
@@ -1185,4 +1193,5 @@ def upload_transcribe():
 
 # Run app in debug mode
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(debug=False, host="0.0.0.0", port=port)
